@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chatbot</title>
+    <script src="scripts.js"></script>
+    <!-- Enlace a Bootstrap CSS -->
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+
+    <style>
+        * {
+            padding: 0;
+            margin: 0;
+            box-sizing: border-box;
+        }
+
+        form {
+            border: 1px solid black;
+            width: 30%;
+            padding: 10px;
+            margin: 10em 0em 0em 5em;
+        }
+
+        input {
+            width: 90%;
+            margin-bottom: 10px;
+        }
+
+        button {
+            width: 100%;
+            display: block;
+        }
+
+        #file-list {
+            list-style-type: none;
+            height: 10em;
+        }
+
+        ul#file-list {
+            list-style-type: none;
+        }
+
+        ul#file-list li:nth-child(odd) {
+            background-color: #f0f0f0;
+            /* Cambia el color de fondo de las filas impares */
+        }
+
+        #list-header {
+            background-color: rgb(2, 255, 171);
+        }
+
+        #list-header {
+            background-color: rgb(235, 235, 235);
+            margin-top: 10px;
+        }
+    </style>
+</head>
+
+<body>
+    <form>
+        <input type="file" id="fileInput" class="form-control mb-2" onchange="openFile()">
+        <button type="button" onclick="ingestFiles()" class="btn btn-primary btn-block">Cargar archivos</button>
+        <!-- Añadido type="button" para prevenir el envío del formulario -->
+
+        <div id="list-header" class="p-2 mb-2">
+            Archivos para cargar
+        </div>
+
+        <div id="list-container" class="overflow-auto">
+            <ul id="file-list-pre" class="list-group">
+                <li class="list-group-item" onclick="alert('Elemento 1')">Elemento 1</li>
+                <li class="list-group-item" onclick="alert('Elemento 2')">Elemento 2</li>
+                <li class="list-group-item" onclick="alert('Elemento 3')">Elemento 3</li>
+                <li class="list-group-item" onclick="alert('Elemento 4')">Elemento 4</li>
+                <li class="list-group-item" onclick="alert('Elemento 5')">Elemento 5</li>
+                <!-- Puedes añadir más elementos según sea necesario -->
+            </ul>
+        </div>
+
+        <div id="list-header" class="p-2 mb-2">
+            Archivos cargados
+        </div>
+
+        <div id="list-container" class="overflow-auto">
+            <ul id="file-list-ingest" class="list-group">
+                <li class="list-group-item" onclick="alert('Elemento 1')">Elemento 1</li>
+                <li class="list-group-item" onclick="alert('Elemento 2')">Elemento 2</li>
+                <li class="list-group-item" onclick="alert('Elemento 3')">Elemento 3</li>
+                <li class="list-group-item" onclick="alert('Elemento 4')">Elemento 4</li>
+                <li class="list-group-item" onclick="alert('Elemento 5')">Elemento 5</li>
+                <!-- Puedes añadir más elementos según sea necesario -->
+            </ul>
+        </div>
+    </form>
+
+    <script>
+        files_to_ingest = []
+        ingested_files = []
+        url = '127.0.0.1:8001'
+
+        function openFile() {
+            // Obtener el elemento de entrada de archivo
+            var fileInput = document.getElementById('fileInput');
+
+            // Verificar si se ha seleccionado un archivo
+            if (fileInput.files.length > 0) {
+                // Obtener el primer archivo seleccionado
+                var file = fileInput.files[0];
+
+                // Agregar el archivo a la lista de archivos para ingestión
+                files_to_ingest.push(file);
+
+                // Llamar a la función para actualizar la lista de archivos para cargar
+                getFilesToIngest();
+            } else {
+                alert('Por favor, seleccione un archivo.');
+            }
+        }
+
+        function getFilesToIngest() {
+            // Obtener el elemento de lista de archivos para cargar
+            var fileListPre = document.getElementById('file-list-pre');
+
+            // Limpiar la lista
+            fileListPre.innerHTML = '';
+
+            // Recorrer la lista de archivos para ingestión y agregar los nombres a la lista HTML
+            files_to_ingest.forEach(function (file) {
+                var listItem = document.createElement('li');
+                listItem.textContent = file.name;
+                fileListPre.appendChild(listItem);
+            });
+        }
+
+        async function ingestFiles() {
+            for (const file of files_to_ingest) {
+                try {
+                    const formData = new FormData();
+                    formData.append('file', file);
+
+                    const response = await fetch(`http://${url}/v1/ingest/file`, {
+                        method: 'POST',
+                        body: formData
+                    });
+
+                    if (response.ok) {
+                        const responseData = await response.json();
+                        // Manejar la respuesta según sea necesario
+                        console.log(responseData); // Por ejemplo, puedes mostrar la respuesta en la consola
+                    } else {
+                        console.error('Error al enviar el archivo:', response.status);
+                    }
+                } catch (error) {
+                    console.error('Error al procesar la solicitud:', error);
+                }
+            }
+        }
+
+
+        function getIngestedFiles() {
+            fetch('http://127.0.0.1:8001/v1/ingest/list', {
+                method: 'GET',
+                headers: {
+                    'Accept': 'application/json',
+                }
+            })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    // Array to store filenames
+                    const filenames = [];
+
+                    // Loop through the response data
+                    data.data.forEach(doc => {
+                        // Check if the filename already exists in the filenames array
+                        if (!filenames.includes(doc.doc_metadata.file_name)) {
+                            // If not, add it to the filenames array
+                            filenames.push(doc.doc_metadata.file_name);
+                            ingested_files.push({ doc_id: doc.doc_id, file_name: doc.doc_metadata.file_name });
+                            // Add the filename to the list
+                            const fileListElement = document.getElementById('file-list-ingest');
+                            const listItem = document.createElement('li');
+                            listItem.textContent = doc.doc_metadata.file_name;
+                            fileListElement.appendChild(listItem);
+
+
+                        }
+
+                        // Store the doc_id and file_name in ingested_files array
+
+                    });
+                })
+                .catch(error => {
+                    console.error('Error fetching ingested files:', error);
+                });
+        }
+
+
+        function setIngestedList(filenames) {
+            filenames.forEach(name => {
+                // Add the filename to the list
+                const fileListElement = document.getElementById('file-list-ingest');
+                const listItem = document.createElement('li');
+                listItem.setAttribute('class', 'list-group-item');
+                listItem.innerHTML = name;
+                fileListElement.appendChild(listItem);
+            });
+        }
+
+
+        getIngestedFiles()
+
+        console.log(ingested_files)
+    </script>
+</body>
+
+</html>
