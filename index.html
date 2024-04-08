@@ -6,220 +6,104 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Chatbot</title>
     <script src="scripts.js"></script>
-    <!-- Enlace a Bootstrap CSS -->
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
 
     <style>
         * {
-            padding: 0;
             margin: 0;
+            padding: 0;
             box-sizing: border-box;
         }
 
         form {
-            border: 1px solid black;
-            width: 15%;
-            height: 30%;
-            padding: 10px;
-            margin: 10em 0em 0em 1em;
-            border-radius: 10px;
             min-width: 12em;
         }
 
-        input {
-            width: 90%;
-        }
-
-        button {
-            width: 100%;
-            display: block;
-        }
-
-
-        #file-list-pre,
-        #file-list-ingest {
-            background-color: #c2c2c2;
-        }
-
-
-        ul#file-list-pre li:nth-child(odd),
-        ul#file-list-ingest li:nth-child(odd) {
+        .file-list li,
+        select#file-list-ingested option {
             background-color: #f0f0f0;
+            height: 2em;
+            display: flex;
+            align-items: center;
         }
 
-        ul#file-list-pre {
+        .file-list li:nth-child(even),
+        select#file-list-ingested option:nth-child(even) {
+            background-color: #ffffff;
+        }
+
+        .file-list {
+            background-color: #c2c2c2;
             max-height: 10em;
             min-height: 10em;
         }
 
-
         #list-header {
-            background-color: rgb(104, 0, 189);
-            color: #f0f0f0;
-            border-radius: 5px;
-            text-align: center;
+            height: 2em;
+        }
+
+        .custom-file-input~.custom-file-label::after {
+            content: "Elegir";
+        }
+
+        .no-collapse {
+            white-space: nowrap;
+            text-overflow: ellipsis;
+            overflow: hidden;
+        }
+
+        #file-list-ingested {
+            border-color: transparent;
+            outline: 0;
+            margin-bottom: -2px;
         }
     </style>
 </head>
 
 <body>
-    <form>
-        <input type="file" id="fileInput" class="form-control mb-2" onchange="selectFile()">
-
-        <div id="list-header" class="p-2">
-            Archivos para cargar
-        </div>
-
-        <ul id="file-list-pre" class="list-group overflow-auto mb-2 mt-3">
-
-        </ul>
-
-        <button type="button" onclick="" class="btn btn-primary btn-block mb-3">Reestablecer</button>
-        <div id="list-header" class="p-2">
-            Archivos cargados
-        </div>
-
-        <ul id="file-list-ingest" class="list-group overflow-auto mt-3 mb-4">
-        </ul>
-
-        <button type="button" onclick="ingestFiles()" class="btn btn-primary btn-block">Cargar archivos</button>
-    </form>
-
-    <script>
-        var files_to_ingest = [];
-        var ingested_files = [];
-        var relations;
-        const url = '127.0.0.1:8001';
+    <div class="container p-0 m-0">
+        <form class="col border rounded p-2 w-25 border-primary">
+            <div class="custom-file mb-1">
+                <input type="file" class="custom-file-input" id="fileInput" onchange="selectFile()" multiple>
+                <label class="custom-file-label" for="fileInput">
+                    Seleccionar archivo
+                </label>
+            </div>
 
 
-        function selectFile() {
-            var fileInput = document.getElementById('fileInput');
-            openFile(fileInput);
-        }
+            <div class="p-1 text-center rounded-top bg-secondary text-light">
+                Archivos para cargar
+            </div>
+
+            <ul id="file-list-pre" class="file-list rounded-bottom overflow-auto m-0">
+            </ul>
+
+            <button type="button" id="reset-files" onclick="resetPreFiles()"
+                class="btn btn-info btn-block mb-3">Reestablecer</button>
+            <button type="button" onclick="ingestFiles(), resetPreFiles()" class="btn btn-primary btn-block mb-3">Cargar
+                archivos</button>
+
+            <div class="p-1 text-center rounded-top bg-secondary text-light">
+                Archivos cargados
+            </div>
+
+            <select id="file-list-ingested" multiple class="file-list w-100" size="4"
+                onchange="addToSelectedList(this)">
+            </select>
+            <button type="button" onclick="selectAllOptions()" class="btn btn-info w-100 mb-3">Seleccionar Todo</button>
+
+            <div id="list-header" class="p-1 text-center rounded-top bg-secondary text-light">
+                Archivos seleccionados
+            </div>
+
+            <ul id="file-list-selected" class="file-list rounded-bottom overflow-auto m-0">
+            </ul>
+            <button type="button" onclick="clearSelectedList()" class="btn btn-info mb-2 w-100">Restablecer</button>
 
 
-        function openFile(fileInput) {
-            // Verificar si se ha seleccionado un archivo
-            if (fileInput.files.length > 0) {
-                // Obtener el primer archivo seleccionado
-                var file = fileInput.files[0];
-
-                // Agregar el archivo a la lista de archivos para ingestión
-                files_to_ingest.push(file);
-
-                // Llamar a la función para actualizar la lista de archivos para cargar
-                getFilesToIngest();
-            } else {
-                alert('Por favor, seleccione un archivo.');
-            }
-        }
-
-        function getFilesToIngest() {
-            // Obtener el elemento de lista de archivos para cargar
-            var fileListPre = document.getElementById('file-list-pre');
-
-            // Limpiar la lista
-            fileListPre.innerHTML = '';
-
-            // Recorrer la lista de archivos para ingestión y agregar los nombres a la lista HTML
-            files_to_ingest.forEach(function (file) {
-                var listItem = document.createElement('li');
-                listItem.textContent = file.name;
-                listItem.className = 'list-group-item'
-                fileListPre.appendChild(listItem);
-            });
-        }
-
-        async function ingestFiles() {
-            for (const file of files_to_ingest) {
-                try {
-                    const formData = new FormData();
-                    formData.append('file', file);
-
-                    const response = await fetch(`http://${url}/v1/ingest/file`, {
-                        method: 'POST',
-                        body: formData
-                    });
-
-                    if (response.ok) {
-                        const responseData = await response.json();
-                        // Manejar la respuesta según sea necesario
-                        console.log(responseData); // Por ejemplo, puedes mostrar la respuesta en la consola
-                    } else {
-                        console.error('Error al enviar el archivo:', response.status);
-                    }
-                } catch (error) {
-                    console.error('Error al procesar la solicitud:', error);
-                }
-            }
-        }
-
-
-        function getIngestedFiles() {
-            fetch('http://127.0.0.1:8001/v1/ingest/list', {
-                method: 'GET',
-                headers: {
-                    'Accept': 'application/json',
-                }
-            })
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error('Network response was not ok');
-                    }
-                    return response.json();
-                })
-                .then(data => {
-                    const fileListElement = document.getElementById('file-list-ingest');
-                    const fragment = document.createDocumentFragment(); // Create a document fragment
-                    const filenames = [];
-                    relations = relacionarDocId(JSON.stringify(data.data));
-
-                    data.data.forEach(doc => {
-                        // Check if the filename already exists in the filenames array
-                        if (!filenames.includes(doc.doc_metadata.file_name)) {
-                            // If not, add it to the filenames array and add to ingested_files
-                            filenames.push(doc.doc_metadata.file_name);
-
-                            // Create and append the list item to the document fragment
-                            const listItem = document.createElement('li');
-                            listItem.textContent = doc.doc_metadata.file_name;
-                            listItem.className = 'list-group-item'
-                            fragment.appendChild(listItem);
-                        }
-                    });
-
-                    // Add all list items to the file list element
-                    fileListElement.appendChild(fragment);
-                })
-                .catch(error => {
-                    console.error('Error fetching ingested files:', error);
-                    alert('Error fetching ingested files. Please try again later.');
-                });
-        }
-
-
-        function relacionarDocId(jsonData) {
-            const data = JSON.parse(jsonData);
-            const relacionDocId = {};
-
-            data.forEach(obj => {
-                const fileName = obj.doc_metadata.file_name;
-                const docId = obj.doc_id;
-
-                if (fileName in relacionDocId) {
-                    relacionDocId[fileName].push(docId);
-                }
-                else {
-                    relacionDocId[fileName] = [docId];
-                }
-            });
-
-            return relacionDocId;
-        }
-
-
-        getIngestedFiles();
-    </script>
+            <button type="button" onclick="deleteFiles()" class="btn btn-danger btn-block">Borrar archivos</button>
+        </form>
+    </div>
 </body>
 
 </html>
