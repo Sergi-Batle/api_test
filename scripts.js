@@ -24,12 +24,17 @@ function openFile(fileInput) {
         // Iterar sobre todos los archivos seleccionados
         for (var i = 0; i < files.length; i++) {
             var file = files[i];
-            if (ingested_files.includes(file.name)) {
+            console.log('files_to_ingest:', files_to_ingest);
+            if (files_to_ingest.some(existingFile => existingFile.name === file.name)) {
+                alert(`${file.name} ya ha sido seleccionado`);
+            }
+            else if (ingested_files.includes(file.name)) {
                 ingested.push(file.name);
                 check = true;
-                continue;
+            }else {
+                files_to_ingest.push(file);
             }
-            files_to_ingest.push(file);
+            
         }
 
         // Llamar a la función para actualizar la lista de archivos para cargar
@@ -63,7 +68,7 @@ function setFilesToIngest() {
     files_to_ingest.forEach(function (file) {
         var listItem = document.createElement('li');
         listItem.textContent = file.name;
-        listItem.className = 'list-group-item no-collapse'
+        listItem.className = 'pl-4 p-2 no-collapse'
         fileListPre.appendChild(listItem);
     });
 }
@@ -92,8 +97,8 @@ async function ingestFiles() {
 
                 if (response.ok) {
                     const responseData = await response.json();
-                    // Manejar la respuesta según sea necesario
-                    console.log(responseData); // Por ejemplo, puedes mostrar la respuesta en la consola
+                    console.log(responseData); 
+                    getIngestedFiles();
                 } else {
                     console.error('Error al enviar el archivo:', response.status);
                 }
@@ -121,8 +126,8 @@ async function getIngestedFiles() {
         const data = await response.json();
         setIngestedFiles(data);
     } catch (error) {
-        console.error('Error fetching ingested files:', error);
-        alert('Error fetching ingested files. Please try again later.');
+        console.error('Error al obtener archivos guardados:', error);
+        alert('Error al obtener archivos guardados');
     }
 }
 
@@ -130,12 +135,13 @@ async function getIngestedFiles() {
 function setIngestedFiles(data) {
     const fileListElement = document.getElementById('file-list-ingested');
     const fragment = document.createDocumentFragment(); // Create a document fragment
-    const filenames = [];
+    var filenames = [];
     relations = relacionarDocId(JSON.stringify(data.data));
 
     data.data.forEach(doc => {
+        var name = doc.doc_metadata.file_name;
         // Check if the filename already exists in the filenames array
-        if (!filenames.includes(doc.doc_metadata.file_name)) {
+        if ((!filenames.includes(name)) && !(ingested_files.includes(name))) {
             // If not, add it to the filenames array and add to ingested_files
             filenames.push(doc.doc_metadata.file_name);
 
@@ -150,6 +156,8 @@ function setIngestedFiles(data) {
     fileListElement.appendChild(fragment);
     console.log(relations)
     ingested_files = filenames;
+    console.log('Filenames:', filenames)
+    console.log('Ingested:', ingested_files);
 }
 
 
@@ -192,43 +200,39 @@ async function keepAlive() {
             console.log('Conexion establecida');
         }
     } catch (error) {
-        console.error('Error fetching ingested files:', error);
+        console.error('Error al obtener conexion:', error);
         alert('Conexión perdida.');
     }
 }
 
 
 function addToSelectedList(selectElement) {
-    var selectedOptions = selectElement.selectedOptions;
+    var selectedValue = selectElement.value;
     var selectedList = document.getElementById('file-list-selected');
+    var selectedText = selectElement.options[selectElement.selectedIndex].textContent;
 
-    // Recorremos todas las opciones seleccionadas
-    for (var i = 0; i < selectedOptions.length; i++) {
-        var selectedOption = selectedOptions[i];
-        var selectedValue = selectedOption.value;
-        var selectedText = selectedOption.textContent;
-
-        // Verificamos si el valor ya está presente en la lista
-        var alreadyExists = false;
-        var listItems = selectedList.getElementsByTagName('li');
-        for (var j = 0; j < listItems.length; j++) {
-            if (listItems[j].getAttribute('value') === selectedValue) {
-                alreadyExists = true;
-                break;
-            }
-        }
-
-        // Si el valor no está presente, lo agregamos a la lista
-        if (!alreadyExists) {
-            selected_files.push(selectedValue);
-            var newListItem = document.createElement('li');
-            newListItem.textContent = selectedText;
-            newListItem.className = 'list-group-item no-collapse';
-            newListItem.setAttribute('value', selectedValue);
-            selectedList.appendChild(newListItem);
+    // Verificamos si el valor ya está presente en la lista
+    var alreadyExists = false;
+    var listItems = selectedList.getElementsByTagName('li');
+    for (var j = 0; j < listItems.length; j++) {
+        if (listItems[j].getAttribute('value') === selectedValue) {
+            alreadyExists = true;
+            break;
         }
     }
+
+    // Si el valor no está presente, lo agregamos a la lista
+    if (!alreadyExists) {
+        selected_files.push(selectedValue);
+        var newListItem = document.createElement('li');
+        newListItem.textContent = selectedText;
+        newListItem.className = 'pl-4 p-2 border no-collapse';
+        newListItem.setAttribute('value', selectedValue);
+        selectedList.appendChild(newListItem);
+    }
+    selectElement.value = '';
 }
+
 
 function clearSelectedList() {
     selected_files = [];
@@ -238,7 +242,7 @@ function clearSelectedList() {
 
 
 function selectAllOptions() {
-    selected_files = ingestFiles;
+    selected_files = ingested_files;
     var select = document.getElementById('file-list-ingested');
     var selectedList = document.getElementById('file-list-selected');
 
@@ -262,6 +266,7 @@ function selectAllOptions() {
         if (!alreadyExists) {
             var newListItem = document.createElement('li');
             newListItem.textContent = optionText;
+            newListItem.className = 'pl-4 p-2 border no-collapse';
             newListItem.setAttribute('value', optionValue);
             selectedList.appendChild(newListItem);
         }
@@ -269,42 +274,54 @@ function selectAllOptions() {
 }
 
 
-function deleteFiles() {
+async function deleteFiles() {
     if (selected_files.length == 0) {
-        alert('No hay archivos seleccionados')
+        alert('No hay archivos seleccionados');
     } else {
         for (const fileName in relations) {
-            if (fileName in selected_files) {
+            if (selected_files.includes(fileName)) {
                 console.log(`Archivo: ${fileName}`);
-                const ids = data[fileName];
+                var ids = relations[fileName];
                 console.log(`IDs:`);
                 ids.forEach(id => {
                     console.log(id);
                 });
+
+                await deleteFile(ids);
             }
         }
     }
+    clearSelectedList();
+    await getIngestedFiles();
 }
 
 
-async function deleteFile(doc_id) {
+async function deleteFile(doc_ids) {
     try {
-        const response = await fetch(`http://${url}/v1/ingest/${doc_id}`, {
-            method: 'DELETE'
+        // Mapea cada ID de documento a una promesa que envía la solicitud DELETE correspondiente
+        const deletePromises = doc_ids.map(async (doc_id) => {
+            const response = await fetch(`http://${url}/v1/ingest/${doc_id}`, {
+                method: 'DELETE'
+            });
+
+            if (!response.ok) {
+                throw new Error(`Error al eliminar el archivo ${doc_id}: ${response.status}`);
+            }
+
+            console.log(`Archivo "${doc_id}" eliminado correctamente.`);
         });
 
-        if (response.ok) {
-            console.log(`Archivo "${file}" eliminado correctamente.`);
-        } else {
-            console.error('Error al eliminar el archivo:', response.status);
-        }
+        // Espera a que todas las promesas se resuelvan (es decir, todas las solicitudes DELETE se completen)
+        await Promise.all(deletePromises);
     } catch (error) {
         console.error('Error al procesar la solicitud de eliminar:', error);
     }
 }
 
 
+
 function seeSelected() {
+    console.log('selected files:');
     for (var i = 0; i < selected_files.length; i++) {
         console.log(selected_files[i]);
     }
@@ -312,11 +329,14 @@ function seeSelected() {
 
 
 function seeIngested() {
-    console.log('ingested files:')
+    console.log('ingested files:');
     for (var i = 0; i < ingested_files.length; i++) {
         console.log(ingested_files[i]);
     }
 }
 
-setInterval(keepAlive, 4000);
+
+
+
+setInterval(keepAlive, 10000);
 getIngestedFiles();

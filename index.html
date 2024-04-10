@@ -15,9 +15,11 @@
             box-sizing: border-box;
         }
 
-        form {
-            min-width: 12em;
+        body,
+        html {
+            height: 100%;
         }
+
 
         .file-list li,
         select#file-list-ingested option {
@@ -30,16 +32,6 @@
         .file-list li:nth-child(even),
         select#file-list-ingested option:nth-child(even) {
             background-color: #ffffff;
-        }
-
-        .file-list {
-            background-color: #c2c2c2;
-            max-height: 10em;
-            min-height: 10em;
-        }
-
-        #list-header {
-            height: 2em;
         }
 
         .custom-file-input~.custom-file-label::after {
@@ -55,14 +47,24 @@
         #file-list-ingested {
             border-color: transparent;
             outline: 0;
-            margin-bottom: -2px;
+            /* margin-bottom: -2px; */
+        }
+
+        ul {
+            height: 10em;
+            background-color: #f0f0f0;
+        }
+
+        select {
+            background-color: #f0f0f0;
         }
     </style>
 </head>
 
 <body>
-    <div class="container p-0 m-0">
-        <form class="col border rounded p-2 w-25 border-primary">
+    <div class="border border-success d-flex">
+
+        <form class="border border-primary rounded col-4 bg-light">
             <div class="custom-file mb-1">
                 <input type="file" class="custom-file-input" id="fileInput" onchange="selectFile()" multiple>
                 <label class="custom-file-label" for="fileInput">
@@ -70,12 +72,11 @@
                 </label>
             </div>
 
-
             <div class="p-1 text-center rounded-top bg-secondary text-light">
                 Archivos para cargar
             </div>
 
-            <ul id="file-list-pre" class="file-list rounded-bottom overflow-auto m-0">
+            <ul id="file-list-pre" class="list-group file-list rounded-bottom overflow-auto">
             </ul>
 
             <button type="button" id="reset-files" onclick="resetPreFiles()"
@@ -83,26 +84,35 @@
             <button type="button" onclick="ingestFiles(), resetPreFiles()" class="btn btn-primary btn-block mb-3">Cargar
                 archivos</button>
 
-            <div class="p-1 text-center rounded-top bg-secondary text-light">
-                Archivos cargados
+
+            <div class="row rounded-top p-1">
+                <div class="bg-secondary text-light w-100 text-center">
+                    Archivos cargados
+                </div>
+
+                <select id="file-list-ingested" multiple class="file-list w-100" size="6"
+                    onchange="addToSelectedList(this), seeSelected()">
+                </select>
+                <button type="button" onclick="selectAllOptions()" class="btn btn-info w-100 mb-3">Seleccionar
+                    Todo</button>
             </div>
 
-            <select id="file-list-ingested" multiple class="file-list w-100" size="4"
-                onchange="addToSelectedList(this)">
-            </select>
-            <button type="button" onclick="selectAllOptions()" class="btn btn-info w-100 mb-3">Seleccionar Todo</button>
 
-            <div id="list-header" class="p-1 text-center rounded-top bg-secondary text-light">
+            <div class="p-1 text-center rounded-top bg-secondary text-light">
                 Archivos seleccionados
             </div>
 
-            <ul id="file-list-selected" class="file-list rounded-bottom overflow-auto m-0">
+            <ul id="file-list-selected" class="file-list overflow-auto m-0">
             </ul>
             <button type="button" onclick="clearSelectedList()" class="btn btn-info mb-2 w-100">Restablecer</button>
 
-
             <button type="button" onclick="deleteFiles()" class="btn btn-danger btn-block">Borrar archivos</button>
         </form>
+
+
+        <div class="col-8 border border-warning">
+            <h1>ola</h1>
+        </div>
     </div>
 </body>
 
