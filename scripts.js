@@ -31,10 +31,10 @@ function openFile(fileInput) {
             else if (ingested_files.includes(file.name)) {
                 ingested.push(file.name);
                 check = true;
-            }else {
+            } else {
                 files_to_ingest.push(file);
             }
-            
+
         }
 
         // Llamar a la función para actualizar la lista de archivos para cargar
@@ -97,7 +97,7 @@ async function ingestFiles() {
 
                 if (response.ok) {
                     const responseData = await response.json();
-                    console.log(responseData); 
+                    console.log(responseData);
                     getIngestedFiles();
                 } else {
                     console.error('Error al enviar el archivo:', response.status);
@@ -122,9 +122,15 @@ async function getIngestedFiles() {
         if (!response.ok) {
             throw new Error('Network response was not ok');
         }
-
         const data = await response.json();
-        setIngestedFiles(data);
+        relations = relacionarDocId(JSON.stringify(data.data));
+        data.data.forEach(doc => {
+            var name = doc.doc_metadata.file_name;
+            if (!(ingested_files.includes(name))) {
+                ingested_files.push(doc.doc_metadata.file_name);
+            }
+        });
+        setIngestedFiles();
     } catch (error) {
         console.error('Error al obtener archivos guardados:', error);
         alert('Error al obtener archivos guardados');
@@ -132,31 +138,20 @@ async function getIngestedFiles() {
 }
 
 
-function setIngestedFiles(data) {
+function setIngestedFiles() {
     const fileListElement = document.getElementById('file-list-ingested');
-    const fragment = document.createDocumentFragment(); // Create a document fragment
-    var filenames = [];
-    relations = relacionarDocId(JSON.stringify(data.data));
+    fileListElement.innerHTML = '';
+    const fragment = document.createDocumentFragment();
+    ingested_files.forEach(function (name) {
+        const listItem = document.createElement('option');
+        listItem.textContent = name;
+        listItem.value = name;
+        listItem.className = 'list-group-item no-collapse'
+        fragment.appendChild(listItem);
 
-    data.data.forEach(doc => {
-        var name = doc.doc_metadata.file_name;
-        // Check if the filename already exists in the filenames array
-        if ((!filenames.includes(name)) && !(ingested_files.includes(name))) {
-            // If not, add it to the filenames array and add to ingested_files
-            filenames.push(doc.doc_metadata.file_name);
-
-            // Create and append the list item to the document fragment
-            const listItem = document.createElement('option');
-            listItem.textContent = doc.doc_metadata.file_name;
-            listItem.value = doc.doc_metadata.file_name;
-            listItem.className = 'list-group-item no-collapse'
-            fragment.appendChild(listItem);
-        }
     });
     fileListElement.appendChild(fragment);
     console.log(relations)
-    ingested_files = filenames;
-    console.log('Filenames:', filenames)
     console.log('Ingested:', ingested_files);
 }
 
@@ -275,7 +270,7 @@ function selectAllOptions() {
 
 
 async function deleteFiles() {
-    if (selected_files.length == 0) {
+    if (selected_files.length === 0) {
         alert('No hay archivos seleccionados');
     } else {
         for (const fileName in relations) {
@@ -286,19 +281,29 @@ async function deleteFiles() {
                 ids.forEach(id => {
                     console.log(id);
                 });
-
-                await deleteFile(ids);
+                deleteFile(ids);
             }
         }
     }
+    updateIngestedFiles();
     clearSelectedList();
-    await getIngestedFiles();
+}
+
+
+function updateIngestedFiles() {
+    ingested_files.forEach(function(ingestedFile, ingestedIndex) {
+        selected_files.forEach(function(selectedFile) {
+            if (ingestedFile === selectedFile) {
+                ingested_files.splice(ingestedIndex, 1);
+            }
+        });
+    });
+    setIngestedFiles(ingested_files);
 }
 
 
 async function deleteFile(doc_ids) {
     try {
-        // Mapea cada ID de documento a una promesa que envía la solicitud DELETE correspondiente
         const deletePromises = doc_ids.map(async (doc_id) => {
             const response = await fetch(`http://${url}/v1/ingest/${doc_id}`, {
                 method: 'DELETE'
@@ -319,6 +324,75 @@ async function deleteFile(doc_ids) {
 }
 
 
+async function send() {
+    reset
+    var input = document.getElementById('input').value.trim();
+    var display = document.getElementById('chat');
+    console.log('input', input);
+
+    if (input === '') {
+        display.innerHTML = 'Escribe papi';
+    } else {
+        try {
+            const requestBody = {
+                text: input,
+                context_filter: {
+                    docs_ids: [
+                        '6f842806-9c28-4abb-a5ef-4f01c5c5ed12'
+                    ]
+                },
+                limit: 10,
+                prev_next_chunks: 2
+            };
+            console.log('Request body:', requestBody);
+
+            const response = await fetch(`http://${url}/v1/chunks`, {
+                method: 'POST',
+                body: JSON.stringify(requestBody),
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            console.log('Chunks response:', response);
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            const responseData = await response.json();
+            responseData.data.forEach(chunk => {
+                var windowText = chunk.document.doc_metadata.window;
+                var originalText = chunk.document.doc_metadata.original_text;
+                var text = chunk.text;
+                var previousTexts = chunk.previous_texts;
+                var nextTexts = chunk.next_texts;
+                var file = chunk.document.doc_metadata.file_name;
+
+                console.log('Window Text:', windowText);
+                console.log('Original Text:', originalText);
+                console.log('Text:', text);
+                console.log('Previous Texts:', previousTexts);
+                console.log('Next Texts:', nextTexts);
+                var mensage = `
+                               Texto: ${text}
+                               </br>
+                               Fuente: ${file}
+                               </br></br>
+                               `
+                display.innerHTML += mensage;
+            });
+
+        } catch (error) {
+            console.error('There was an error with the fetch request:', error);
+        }
+    }
+}
+
+
+function reset() {
+    var display = document.getElementById('chat');
+    display.innerHTML = '';
+}
+
 
 function seeSelected() {
     console.log('selected files:');
@@ -336,7 +410,7 @@ function seeIngested() {
 }
 
 
-
+console.log(relations)
 
 setInterval(keepAlive, 10000);
 getIngestedFiles();
