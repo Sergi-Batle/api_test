@@ -7,76 +7,20 @@
     <title>Chatbot</title>
     <script src="scripts.js"></script>
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
-
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body,
-        html {
-            width: 100%;
-            height: 100vh;
-        }
-
-
-        .file-list li,
-        select#file-list-ingested option {
-            background-color: #f0f0f0;
-            height: 2em;
-            display: flex;
-            align-items: center;
-        }
-
-        .file-list li:nth-child(odd),
-        select#file-list-ingested option:nth-child(odd) {
-            background-color: #ffffff;
-        }
-
-        .custom-file-input~.custom-file-label::after {
-            content: "Elegir";
-        }
-
-        .no-collapse {
-            white-space: nowrap;
-            text-overflow: ellipsis;
-            overflow: hidden;
-        }
-
-        #file-list-ingested {
-            border-color: transparent;
-            outline: 0;
-        }
-
-        ul,
-        select {
-            height: 21vh;
-            background-color: #f0f0f0;
-            
-        }
-
-        #chat {
-                min-height: 30em;
-        }
-
-        
-    </style>
+    <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
-    <div class="d-lg-flex d-md-block bg-dark col-12 p-0 h-100">
-
-        <form class="border rounded bg-light p-3 col-lg-4">
-            <div class="custom-file mb-1 mt-2">
+    <div class="cont d-lg-flex d-md-block bg-dark col-12 p-0 vh-100">
+        <form class="border rounded bg-light p-2 col-lg-4 overflow-auto">
+            <div class="custom-file mb-1">
                 <input type="file" class="custom-file-input" id="fileInput" onchange="selectFile()" multiple>
                 <label class="custom-file-label no-collapse" for="fileInput">
                     Seleccionar archivo
                 </label>
             </div>
 
-            <div class="mb-4">
+            <div class="load-cont">
                 <div class="p-1 text-center rounded-top bg-secondary text-light">
                     Archivos para cargar
                 </div>
@@ -91,49 +35,71 @@
                     <button type="button" id="reset-files" onclick="resetPreFiles()"
                         class="btn btn-info w-100">Reestablecer</button>
                 </div>
+                <div class="loading-cont">
+                    <div id="loading" class="text-primary"></div>
+                </div>
+
             </div>
 
 
-            <div class="row m-0 mb-3">
+            <div class="row m-0">
                 <div class="bg-secondary text-light w-100 text-center rounded-top p-1">
                     Archivos cargados
                 </div>
 
-                <select id="file-list-ingested" multiple class="file-list w-100"
+                <select id="file-list-ingested" multiple class="file-list w-100 m-0"
                     onchange="addToSelectedList(this), seeSelected()">
                 </select>
-                <button type="button" onclick="selectAllOptions()" class="btn btn-info w-100 mb-2">Seleccionar
+                <button type="button" onclick="selectAllOptions()" class="btn btn-info w-100 ">Seleccionar
                     Todo</button>
             </div>
 
-
-            <div class="p-1 text-center rounded-top bg-secondary text-light">
-                Archivos seleccionados
-            </div>
-
-            <ul id="file-list-selected" class="file-list overflow-auto m-0">
-            </ul>
-
-            <div class="d-lg-flex d-md-block">
-                <button type="button" onclick="deleteFiles()"
-                    class="btn btn-danger w-100 mb-1 mb-lg-0 mb-md-1 mr-1">Borrar archivos</button>
-
-                <button type="button" onclick="clearSelectedList()" class="btn btn-info w-100">Restablecer</button>
-            </div>
-
-        </form>
-
-        <div class="col-lg-8 col-sm-12 h-auto p-0 bg-dark">
-
-            <div class="col-12 d-flex flex-column h-100">
-                <div class="bg-light border rounded mt-4 pl-4 overflow-auto h-100" id="chat">
+            <div class="selected-cont">
+                <div class="bg-secondary text-light w-100 text-center rounded-top p-1">
+                    Archivos seleccionados
                 </div>
 
-                <div class="input-group mt-3 mb-3">
-                    <input type="text" class="form-control" placeholder="Escribe" id="input">
-                    <div class="input-group-append">
-                        <button class="btn btn-outline-light" type="button" onclick="send()">Enviar</button>
-                        <button class="btn btn-outline-light" type="button" onclick="reset()">Reset</button>
+                <ul id="file-list-selected" class="file-list overflow-auto m-0">
+                </ul>
+
+                <div id="delete">
+                    <button type="button" onclick="confirmDelete()" class="btn btn-danger w-100 mb-lg-0 mr-1">Borrar
+                        archivos</button>
+
+                    <button type="button" onclick="clearSelectedList()" class="btn btn-info w-100">Restablecer</button>
+                </div>
+
+
+                <div id="confirm-delete" class="bg-warning rounded p-0 mb-0">
+                    <div class="d-flex align-items-center justify-content-center flex-grow-1">
+                        <p class="m-0 text-center">Se borrarán los archivos seleccionados</p>
+                    </div>
+                    <div class="align-self-center">
+                        <button type="button" onclick="deleteFiles()" class="btn btn-danger mb-0">
+                            Borrar archivos
+                        </button>
+                    </div>
+                </div>
+
+                <div class="loading-cont">
+                    <div id="deleting" class="text-danger"></div>
+                </div>
+            </div>
+        </form>
+
+        <div class="col-lg-8 col-sm-12 p-2 pb-3 bg-dark">
+
+            <div class="d-flex align-items-end flex-column h-100">
+                <div class="d-block border border-primary rounded overflow-auto w-100 bg-light p-2" id="chat">
+                </div>
+
+                <div class="mt-auto pt-2  w-100">
+                    <div id="user-input" class="input-group " onkeypress="handleKeyPress(event)">
+                        <input type="text" class="form-control" placeholder="Escribe" id="input">
+                        <div class="input-group-append">
+                            <button class="btn btn-outline-light" type="button" onclick="send()">Enviar</button>
+                            <button class="btn btn-outline-light" type="button" onclick="reset()">Reset</button>
+                        </div>
                     </div>
                 </div>
             </div>

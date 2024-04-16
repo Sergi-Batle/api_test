@@ -1,0 +1,163 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body,
+html {
+    width: 100%;
+    height: 100%;
+}
+
+.cont {
+    min-height: 400px;
+}
+
+
+.file-list li,
+select#file-list-ingested option {
+    background-color: #f0f0f0;
+    height: 3.6vh;
+    display: flex;
+    align-items: center;
+}
+
+.file-list li:nth-child(odd),
+select#file-list-ingested option:nth-child(odd) {
+    background-color: #ffffff;
+}
+
+.custom-file-input~.custom-file-label::after {
+    content: "Elegir";
+}
+
+.no-collapse {
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
+}
+
+#file-list-ingested {
+    border-color: transparent;
+}
+
+ul,
+select {
+    height: 21vh;
+    background-color: #f0f0f0;
+    transition: height 0.3s ease-in-out;
+    outline: none;
+}
+
+#chat {
+    font-family: sans-serif;
+    border: solid aqua 12px;
+    background-color: aqua;
+    height: 100%;
+}
+
+#chat::-webkit-scrollbar-track, 
+form::-webkit-scrollbar-track 
+
+{
+    -webkit-box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.3);
+    background-color: #F5F5F5;
+    border-radius: 10px;
+}
+
+
+#chat::-webkit-scrollbar, 
+form::-webkit-scrollbar 
+
+{
+    width: 10px;
+    background-color: #F5F5F5;
+}
+
+#chat::-webkit-scrollbar-thumb, 
+form::-webkit-scrollbar-thumb 
+
+{
+    border-radius: 10px;
+    background-image: -webkit-gradient(linear,
+            left bottom,
+            left top,
+            color-stop(0.44, rgb(122, 153, 217)),
+            color-stop(0.72, rgb(73, 125, 189)),
+            color-stop(0.86, rgb(28, 58, 148)));
+}
+
+p {
+    text-shadow: 2px 2px 8px #000000;
+}
+
+
+ @media (max-width: 992px) {
+
+    #chat {
+        height: 40em;
+        max-height: 40em;
+    }
+}
+
+.loading-cont {
+    height: 2.5vh;
+    display: flex;
+    align-items: center;
+    border: solid black 1px;
+}
+
+@keyframes loading {
+    0% { content: "Cargando archivos."; }
+    25% { content: "Cargando archivos.."; }
+    50% { content: "Cargando archivos..."; }
+    100% { content: "Cargando archivos"; }
+}
+
+#loading::after {
+    content: "Cargando archivos";
+    animation: loading 1s infinite;
+}
+
+@keyframes deleting {
+    0% { content: "Borrando archivos."; }
+    25% { content: "Borrando archivos.."; }
+    50% { content: "Borrando archivos..."; }
+    100% { content: "Borrando archivos"; }
+}
+
+#delete {
+    display: flex;
+}
+
+#confirm-delete {
+    display: none;
+}
+
+#loading {
+    display: none;
+}
+
+#deleting {
+    display: none;
+}
+
+#deleting::after {
+    content: "Borrando archivos";
+    animation: deleting 1s infinite;
+}
+
+.selected-cont {
+    margin-top: 2.5vh;
+}
+
+.message {
+    max-width: 98%;
+    border-radius: 10px;
+    width: fit-content;
+}
+
+#user_message {
+    margin-left: auto;
+}
