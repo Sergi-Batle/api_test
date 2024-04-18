@@ -10,11 +10,6 @@ html {
     height: 100%;
 }
 
-.cont {
-    min-height: 400px;
-}
-
-
 .file-list li,
 select#file-list-ingested option {
     background-color: #f0f0f0;
@@ -29,7 +24,7 @@ select#file-list-ingested option:nth-child(odd) {
 }
 
 .custom-file-input~.custom-file-label::after {
-    content: "Elegir";
+    content: "Archivos";
 }
 
 .no-collapse {
@@ -52,33 +47,25 @@ select {
 
 #chat {
     font-family: sans-serif;
-    border: solid aqua 12px;
-    background-color: aqua;
     height: 100%;
+    position: relative;
 }
 
-#chat::-webkit-scrollbar-track, 
-form::-webkit-scrollbar-track 
-
-{
+#chat::-webkit-scrollbar-track,
+form::-webkit-scrollbar-track {
     -webkit-box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.3);
     background-color: #F5F5F5;
     border-radius: 10px;
 }
 
-
-#chat::-webkit-scrollbar, 
-form::-webkit-scrollbar 
-
-{
+#chat::-webkit-scrollbar,
+form::-webkit-scrollbar {
     width: 10px;
     background-color: #F5F5F5;
 }
 
-#chat::-webkit-scrollbar-thumb, 
-form::-webkit-scrollbar-thumb 
-
-{
+#chat::-webkit-scrollbar-thumb,
+form::-webkit-scrollbar-thumb {
     border-radius: 10px;
     background-image: -webkit-gradient(linear,
             left bottom,
@@ -93,7 +80,7 @@ p {
 }
 
 
- @media (max-width: 992px) {
+@media (max-width: 992px) {
 
     #chat {
         height: 40em;
@@ -109,10 +96,21 @@ p {
 }
 
 @keyframes loading {
-    0% { content: "Cargando archivos."; }
-    25% { content: "Cargando archivos.."; }
-    50% { content: "Cargando archivos..."; }
-    100% { content: "Cargando archivos"; }
+    0% {
+        content: "Cargando archivos.";
+    }
+
+    25% {
+        content: "Cargando archivos..";
+    }
+
+    50% {
+        content: "Cargando archivos...";
+    }
+
+    100% {
+        content: "Cargando archivos";
+    }
 }
 
 #loading::after {
@@ -121,10 +119,47 @@ p {
 }
 
 @keyframes deleting {
-    0% { content: "Borrando archivos."; }
-    25% { content: "Borrando archivos.."; }
-    50% { content: "Borrando archivos..."; }
-    100% { content: "Borrando archivos"; }
+    0% {
+        content: "Borrando archivos.";
+    }
+
+    25% {
+        content: "Borrando archivos..";
+    }
+
+    50% {
+        content: "Borrando archivos...";
+    }
+
+    100% {
+        content: "Borrando archivos";
+    }
+}
+
+@keyframes loading-chat {
+    0% {
+        content: "Cargando respuesta.";
+    }
+
+    16.6% {
+        content: "Cargando respuesta..";
+    }
+
+    33.3% {
+        content: "Cargando respuesta...";
+    }
+
+    49.6% {
+        content: "Cargando respuesta....";
+    }
+
+    66.6% {
+        content: "Cargando respuesta.....";
+    }
+
+    100% {
+        content: "Cargando respuesta";
+    }
 }
 
 #delete {
@@ -141,6 +176,27 @@ p {
 
 #deleting {
     display: none;
+}
+
+#chat-crono {
+    margin: auto;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    align-self: flex-start;
+    font-weight: 400;
+}
+
+
+#loading-chat {
+    display: none;
+    font-size: 1.1em;
+    font-weight: 500;
+}
+
+#loading-chat::after {
+    content: "Cargando respuesta";
+    animation: loading-chat 1s infinite;
 }
 
 #deleting::after {
@@ -160,4 +216,14 @@ p {
 
 #user_message {
     margin-left: auto;
+}
+
+img {
+    height: 4em;
+    margin: auto;
+}
+
+.nav button:focus {
+    box-shadow: none;
+    background-color: #007BFF;
 }

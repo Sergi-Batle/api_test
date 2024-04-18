@@ -1,17 +1,18 @@
 const ip = '127.0.0.1';
 const port = '8001';
 const url = `${ip}:${port}`;
+var mode = true;
 var files_to_ingest = [];
 var file_names_to_ingest = [];
 var ingested_files = [];
 var selected_files = [];
 
 
-function selectFile() {
-    var fileInput = document.getElementById('fileInput');
-    openFile(fileInput);
-    fileInput.value = null;
+function selectFile(element) {
+    openFile(element);
+    element.value = null;
 }
+
 
 function openFile(fileInput) {
     var ingested = [];
@@ -75,6 +76,8 @@ async function ingestFiles() {
     if (files_to_ingest.length == 0) {
         alert('No hay archivos para subir')
     } else {
+        var count = files_to_ingest.length;
+        console.log('start count: ');
         for (var file of files_to_ingest) {
             loading.style.display = 'flex';
             ingestFile(file, loading);
@@ -92,14 +95,14 @@ async function ingestFile(file, loading) {
             method: 'POST',
             body: formData
         });
-        
+
         if (response.ok) {
-            const responseData = await response.json();
+            var responseData = await response.json();
             console.log(responseData);
             getIngestedFiles();
             loading.style.display = 'none';
+
         } else {
-            loading.style.display = 'none';
             console.error('Error al enviar el archivo:', response.status);
         }
     } catch (error) {
@@ -109,6 +112,7 @@ async function ingestFile(file, loading) {
 
 
 async function getIngestedFiles() {
+    ingested_files = [];
     try {
         const response = await fetch(`http://${url}/v1/ingest/list`, {
             method: 'GET',
@@ -121,11 +125,8 @@ async function getIngestedFiles() {
             throw new Error('Network response was not ok');
         }
         const data = await response.json();
-        console.log(data);
         data.forEach(function (fileName) {
-            if (!(ingested_files.includes(fileName))) {
-                ingested_files.push(fileName);
-            }
+            ingested_files.push(fileName);
         });
         setIngestedFiles();
     } catch (error) {
@@ -148,7 +149,6 @@ function setIngestedFiles() {
 
     });
     fileListElement.appendChild(fragment);
-    ingested_files = [];
 }
 
 
@@ -257,35 +257,49 @@ async function deleteFile(file_name, deleting) {
 }
 
 
-async function send() {
+async function search() {
     var input = document.getElementById('input');
     var value = input.value.trim();
     var display = document.getElementById('chat');
+    var loading = document.getElementById('loading-chat');
+    var cronometro = document.getElementById('chat-crono');
+    var startTime, requestId;
 
     if (value !== '') {
+        loading.style.display = 'block';
+        display.innerHTML += "<div class='border bg-primary text-light p-2 ml-auto message mt-2 mb-2'>" + value + "</div>";
         try {
+            input.value = '';
             const requestBody = {
                 text: value,
-                limit: 10,
+                limit: 300,
                 prev_next_chunks: 100
             };
-
-            const response = await fetch(`http://${url}/v1/chunks`, {
+            startTime = performance.now();
+            requestId = requestAnimationFrame(updateElapsedTime);
+            var response = await fetch(`http://${url}/v1/chunks`, {
                 method: 'POST',
                 body: JSON.stringify(requestBody),
                 headers: {
                     'Content-Type': 'application/json'
                 }
             });
+            cancelAnimationFrame(requestId);
+            var endTime = performance.now();
 
             console.log('Chunks response:', response);
             if (!response.ok) {
                 throw new Error('Network response was not ok');
+            } else {
+                loading.style.display = 'none';
+                const responseTimeInSeconds = (endTime - startTime) / 1000;
+                cronometro.textContent = responseTimeInSeconds.toFixed(2) + ' s';
             }
+
             var responseData = await response.json();
             var messages = '';
             var count = 1;
-            responseData.data.forEach((chunk, idx) => {
+            responseData.data.forEach((chunk) => {
                 var windowText = chunk.document.doc_metadata.window;
                 var originalText = chunk.document.doc_metadata.original_text;
                 var text = chunk.text;
@@ -294,61 +308,64 @@ async function send() {
                 var file = chunk.document.doc_metadata.file_name;
                 var page = chunk.document.doc_metadata.page_label;
                 var message;
-                // console.log('Window Text:', windowText);
-                // console.log('Original Text:', originalText);
-                // console.log('Text:', text);
-                // console.log('Previous Texts:', previousTexts);
-                // console.log('Next Texts:', nextTexts);
                 if (comprobarContenido(value, text)) {
                     if (page === undefined) {
                         message = `
                                    ${count} . <b>${file}</b>
                                    </br>
-                                   Texto: ${text}
+                                   ${text}
                                    </br></br>`
                     } else {
                         message = `
                                     ${count} . <b>${file} (pagina ${page})</b>
                                    </br>
-                                   Texto: ${text}
+                                   ${text}
                                    </br></br>`
                     }
-                    
                     messages += message;
                     count++;
                 }
             });
-            console.log('server message: ', messages);
-            display.innerHTML += "<div class='border bg-primary text-light p-2 ml-auto message mt-2 mb-2'>" + value + "</div>";                        
             if (messages !== '') {
                 display.innerHTML += "<div class='border bg-dark text-light p-2 message'>" + messages + "</div>";
-                }
+            }
             display.scrollTop = display.scrollHeight;
-            input.value = '';
-
         } catch (error) {
             console.error('There was an error with the fetch request:', error);
+            cancelAnimationFrame(requestId);
         }
+    }
+
+    function updateElapsedTime(currentTime) {
+        const elapsedTime = (currentTime - startTime) / 1000;
+        cronometro.textContent = elapsedTime.toFixed(2) + ' s';
+        requestId = requestAnimationFrame(updateElapsedTime);
     }
 }
 
 
-var deleteVisible = false;
+function send() {
+    console.log('mode: ', mode);
+    if (mode) {
+        search();
+    } else {
+
+    }
+}
+
 
 function confirmDelete() {
     var del = document.getElementById('delete');
     var conf = document.getElementById('confirm-delete');
 
-    if (!deleteVisible) {
+    if (del.style.display === 'flex') {
         del.style.display = 'none';
         conf.style.display = 'flex';
     } else {
         del.style.display = 'flex';
         conf.style.display = 'none';
     }
-    deleteVisible = !deleteVisible;
 }
-
 
 
 function comprobarContenido(cadena1, cadena2) {
@@ -378,12 +395,30 @@ function comprobarContenido(cadena1, cadena2) {
 
 function processText(cadena) {
     cadena = cadena.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-    cadena = cadena.replace(/[.,()'…":\[\]\n—]/g, '');
+    cadena = cadena.replace(/[.,()'…":\[\]\n\[\t]—]/g, '');
     cadena = cadena.toLowerCase();
 
     return cadena;
 }
 
+function changeMode1() {
+    var search = document.getElementById('search');
+    var query = document.getElementById('query');
+
+    mode = true;
+    search.className = 'btn btn-primary';
+    query.className = 'btn btn-secondary';
+}
+
+
+function changeMode2() {
+    var search = document.getElementById('search');
+    var query = document.getElementById('query');
+
+    mode = false;
+    search.className = 'btn btn-secondary';
+    query.className = 'btn btn-primary';
+}
 
 function reset() {
     var display = document.getElementById('chat');
@@ -415,5 +450,9 @@ function seeIngested() {
     }
 }
 
-setInterval(keepAlive, 10000);
+function openDir() {
+    document.getElementById('input-dir').click();
+}
+
+setInterval(keepAlive, 20000);
 getIngestedFiles();

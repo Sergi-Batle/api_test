@@ -8,16 +8,33 @@
     <script src="scripts.js"></script>
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
+
 </head>
 
 <body>
-    <div class="cont d-lg-flex d-md-block bg-dark col-12 p-0 vh-100">
+    <!-- <nav class="col-1 p-0 d-block bg-dark">
+            <button class="border w-100 align-items-center d-flex border border-primary">
+                <img src="icons/home-icon.svg" alt="*" class="border">
+            </button>
+        </nav> -->
+
+    <div class="d-lg-flex d-md-block bg-dark col-12 p-0 h-100">
         <form class="border rounded bg-light p-2 col-lg-4 overflow-auto">
-            <div class="custom-file mb-1">
-                <input type="file" class="custom-file-input" id="fileInput" onchange="selectFile()" multiple>
-                <label class="custom-file-label no-collapse" for="fileInput">
-                    Seleccionar archivo
-                </label>
+
+            <div class="d-flex  mb-1">
+                <button class="btn btn-outline-secondary col-4 no-collapse" onclick="openDir()" type="button"
+                    id="btn-dir">Cargar directorio</button>
+                <input type="file" id="input-dir" style="display: none;"
+                    accept=".hwp, .pdf, .docx, .pptx, .ppt, .pptm, .jpg, .png, .jpeg, .csv, .epub, .md, .mbox, .ipynb, .json"
+                    onchange="selectFile(this)" webkitdirectory directory>
+                <div class="custom-file h-100">
+                    <input type="file" class="custom-file-input" id="fileInput"
+                        accept=".hwp, .pdf, .docx, .pptx, .ppt, .pptm, .jpg, .png, .jpeg, .csv, .epub, .md, .mbox, .ipynb, .json"
+                        onchange="selectFile(this)" multiple>
+                    <label class="custom-file-label no-collapse" for="fileInput">
+                        Seleccionar archivos
+                    </label>
+                </div>
             </div>
 
             <div class="load-cont">
@@ -75,7 +92,7 @@
                         <p class="m-0 text-center">Se borrarán los archivos seleccionados</p>
                     </div>
                     <div class="align-self-center">
-                        <button type="button" onclick="deleteFiles()" class="btn btn-danger mb-0">
+                        <button type="button" onclick="deleteFiles(), confirmDelete()" class="btn btn-danger mb-0">
                             Borrar archivos
                         </button>
                     </div>
@@ -87,9 +104,17 @@
             </div>
         </form>
 
-        <div class="col-lg-8 col-sm-12 p-2 pb-3 bg-dark">
+        <div class="col-lg-8 col-sm-12  pb-3 bg-dark">
+            <div class="d-flex align-items-start flex-column h-100">
+                <div class="d-flex nav align-items-center w-100">
+                    <button id="search" type="button" class="btn btn-primary" onclick="changeMode1()">Buscar
+                        texto</button>
+                    <button id="query" type="button" class="btn btn-secondary" onclick="changeMode2()">Consultar
+                        documentos</button>
+                    <div id="loading-chat" class="pl-3 text-light"></div>
+                    <div id="chat-crono" class="ml-auto mr-4 text-light"></div>
+                </div>
 
-            <div class="d-flex align-items-end flex-column h-100">
                 <div class="d-block border border-primary rounded overflow-auto w-100 bg-light p-2" id="chat">
                 </div>
 
