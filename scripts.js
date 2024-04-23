@@ -1,6 +1,7 @@
 const ip = '127.0.0.1';
 const port = '8001';
 const url = `${ip}:${port}`;
+var deleteVisible = false;
 var mode = true;
 var files_to_ingest = [];
 var file_names_to_ingest = [];
@@ -9,16 +10,22 @@ var selected_files = [];
 
 
 function selectFile(element) {
-    openFile(element);
+    openFile(element.files);
     element.value = null;
 }
 
 
-function openFile(fileInput) {
+function selectDir(event) {
+    var fileList = event.target.files;
+    openFile(fileList);
+}
+
+
+function openFile(files) {
+    console.log('files in openfile: ', files);
     var ingested = [];
     var check = false;
-    if (fileInput.files.length > 0) {
-        var files = fileInput.files;
+    if (files.length > 0) {
         for (var file of files) {
             var file_name = file.name;
             if (ingested_files.includes(file_name)) {
@@ -43,12 +50,26 @@ function openFile(fileInput) {
                     already_ingested += `${ingested[i]} ya han sido procesados `
                 }
             }
-            alert(`Los archivos ${names}`)
+            alert(`Los archivos ${already_ingested}`)
         } else {
             alert(`El archivo ${ingested[0]} ya ha sido procesado`)
         }
     }
 }
+
+function ingestFiles() {
+    var loading = document.getElementById('loading');
+    if (files_to_ingest.length == 0) {
+        alert('No hay archivos para subir')
+    } else {
+        for (var file of files_to_ingest) {
+            loading.style.display = 'flex';
+            ingestFile(file, loading);
+        }
+    }
+    resetPreFiles();
+}
+
 
 
 function setFilesToIngest() {
@@ -71,26 +92,10 @@ function resetPreFiles() {
 }
 
 
-async function ingestFiles() {
-    var loading = document.getElementById('loading');
-    if (files_to_ingest.length == 0) {
-        alert('No hay archivos para subir')
-    } else {
-        var count = files_to_ingest.length;
-        console.log('start count: ');
-        for (var file of files_to_ingest) {
-            loading.style.display = 'flex';
-            ingestFile(file, loading);
-        }
-    }
-}
-
-
 async function ingestFile(file, loading) {
     try {
         const formData = new FormData();
         formData.append('file', file);
-
         const response = await fetch(`http://${url}/v1/ingest/file`, {
             method: 'POST',
             body: formData
@@ -233,6 +238,7 @@ async function deleteFiles() {
             deleteFile(fileName, deleting)
         }
     }
+    confirmDelete();
     clearSelectedList();
 }
 
@@ -257,83 +263,56 @@ async function deleteFile(file_name, deleting) {
 }
 
 
-async function search() {
+async function send() {
     var input = document.getElementById('input');
-    var value = input.value.trim();
     var display = document.getElementById('chat');
     var loading = document.getElementById('loading-chat');
     var cronometro = document.getElementById('chat-crono');
-    var startTime, requestId;
+    var value = input.value.trim();
 
-    if (value !== '') {
+    if (value != '') {
         loading.style.display = 'block';
-        display.innerHTML += "<div class='border bg-primary text-light p-2 ml-auto message mt-2 mb-2'>" + value + "</div>";
-        try {
-            input.value = '';
-            const requestBody = {
-                text: value,
-                limit: 300,
-                prev_next_chunks: 100
-            };
-            startTime = performance.now();
-            requestId = requestAnimationFrame(updateElapsedTime);
-            var response = await fetch(`http://${url}/v1/chunks`, {
-                method: 'POST',
-                body: JSON.stringify(requestBody),
-                headers: {
-                    'Content-Type': 'application/json'
-                }
-            });
-            cancelAnimationFrame(requestId);
-            var endTime = performance.now();
-
-            console.log('Chunks response:', response);
-            if (!response.ok) {
-                throw new Error('Network response was not ok');
-            } else {
-                loading.style.display = 'none';
-                const responseTimeInSeconds = (endTime - startTime) / 1000;
-                cronometro.textContent = responseTimeInSeconds.toFixed(2) + ' s';
-            }
-
-            var responseData = await response.json();
-            var messages = '';
-            var count = 1;
-            responseData.data.forEach((chunk) => {
-                var windowText = chunk.document.doc_metadata.window;
-                var originalText = chunk.document.doc_metadata.original_text;
-                var text = chunk.text;
-                var previousTexts = chunk.previous_texts;
-                var nextTexts = chunk.next_texts;
-                var file = chunk.document.doc_metadata.file_name;
-                var page = chunk.document.doc_metadata.page_label;
-                var message;
-                if (comprobarContenido(value, text)) {
-                    if (page === undefined) {
-                        message = `
-                                   ${count} . <b>${file}</b>
-                                   </br>
-                                   ${text}
-                                   </br></br>`
-                    } else {
-                        message = `
-                                    ${count} . <b>${file} (pagina ${page})</b>
-                                   </br>
-                                   ${text}
-                                   </br></br>`
-                    }
-                    messages += message;
-                    count++;
-                }
-            });
-            if (messages !== '') {
-                display.innerHTML += "<div class='border bg-dark text-light p-2 message'>" + messages + "</div>";
-            }
-            display.scrollTop = display.scrollHeight;
-        } catch (error) {
-            console.error('There was an error with the fetch request:', error);
-            cancelAnimationFrame(requestId);
+        input.value = '';
+        if (mode) {
+            await search(value, display, cronometro);
+        } else {
+            await query(value, display, cronometro);
         }
+        loading.style.display = 'none';
+    }
+}
+
+
+async function getChunks(value, cronometro) {
+    try {
+        const requestBody = {
+            text: value,
+            limit: 100,
+            prev_next_chunks: 50
+        };
+        var startTime = performance.now();
+        var requestId = requestAnimationFrame(updateElapsedTime);
+        var response = await fetch(`http://${url}/v1/chunks`, {
+            method: 'POST',
+            body: JSON.stringify(requestBody),
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+        cancelAnimationFrame(requestId);
+        var endTime = performance.now();
+
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        } else {
+            loading.style.display = 'none';
+            const responseTimeInSeconds = (endTime - startTime) / 1000;
+            cronometro.textContent = responseTimeInSeconds.toFixed(2) + ' s';
+        }
+
+        return await response.json();
+    } catch (error) {
+        console.error('There was an error with the fetch request:', error);
     }
 
     function updateElapsedTime(currentTime) {
@@ -344,13 +323,203 @@ async function search() {
 }
 
 
-function send() {
-    console.log('mode: ', mode);
-    if (mode) {
-        search();
-    } else {
+async function search(value, display, cronometro) {
+    display.innerHTML += "<div class='border bg-primary text-light p-2 ml-auto message mt-2 mb-2'>" + value + "</div>";
 
+    try {
+        var responseData = await getChunks(value, loading, cronometro);
+
+        var messages = '';
+        var count = 1;
+        responseData.data.forEach((chunk) => {
+            var text = chunk.text;
+            var file = chunk.document.doc_metadata.file_name;
+            var page = chunk.document.doc_metadata.page_label;
+            var message;
+            if (comprobarContenido(value, text)) {
+                const regex = /www\.[^\s]+/g;
+                const links = text.match(regex);
+                text = text.replace(/(www\.[^\s]+|https?:\/\/[^\s]+)/g, '');
+                if (page === undefined) {
+                    message = `
+                                   ${count} . <b>${file}</b>
+                                   </br>
+                                   <p class='ml-2 m-0'>${text}</p>
+                                   </br>
+                                   `
+                } else {
+                    message = `
+                                   ${count} . <b>${file} (pagina ${page})</b>
+                                   </br>
+                                   <p class='ml-2 m-0'>${text}</p>
+                                   </br>
+                                   `
+                }
+
+                if (links) {
+                    links.forEach(function (link) {
+                        message += `<a href='http://${link}'>${link}</a> 
+                                        </br>`
+                    });
+                }
+                message += "<hr class='bg-light'>"
+                messages += message;
+                count++;
+            }
+        });
+
+        if (messages !== '') {
+            display.innerHTML += "<div class='border bg-dark text-light p-2 message'>" + messages + "</div>";
+        }
+        display.scrollTop = display.scrollHeight;
+    } catch (error) {
+        console.error('There was an error with the fetch request:', error);
     }
+}
+
+
+async function getMessage(value, cronometro) {
+    try {
+        var filter = [];
+        if (selected_files.length === 0) {
+            filter = await getFilter(value, cronometro);
+        } else {
+            filter = selected_files;
+        }
+
+        const requestBody = {
+            context_filter: {
+                docs_ids: filter
+            },
+            include_sources: true,
+            messages: [
+                {
+                    "content": "Always answer in spanish",
+                    "role": "system"
+                },
+                {
+                    "content": value,
+                    "role": "user"
+                }
+            ],
+            stream: true,
+            use_context: true
+        };
+        startTime = performance.now();
+        requestId = requestAnimationFrame(updateElapsedTime);
+        var response = await fetch(`http://${url}/v1/chat/completions`, {
+            method: 'POST',
+            body: JSON.stringify(requestBody),
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+        cancelAnimationFrame(requestId);
+        var endTime = performance.now();
+
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        } else {
+            const responseTimeInSeconds = (endTime - startTime) / 1000;
+            cronometro.textContent = responseTimeInSeconds.toFixed(2) + ' s';
+        }
+
+        return response;
+    } catch (error) {
+        console.error('There was an error with the fetch request:', error);
+        cancelAnimationFrame(requestId);
+    }
+
+    function updateElapsedTime(currentTime) {
+        const elapsedTime = (currentTime - startTime) / 1000;
+        cronometro.textContent = elapsedTime.toFixed(2) + ' s';
+        requestId = requestAnimationFrame(updateElapsedTime);
+    }
+}
+
+
+async function query(value, display, cronometro) {
+    loading.style.display = 'block';
+    display.innerHTML += "<div class='border bg-primary text-light p-2 ml-auto message mt-2 mb-2'>" + value + "</div>";
+
+    var responseData = await getMessage(value, cronometro);
+    console.log('response data: ', responseData);
+
+    
+
+    // var message;
+    // if (responseData.choices && responseData.choices.length > 0) {
+    //     responseData.choices.forEach(choice => {
+    //         var file = choice.sources[0].document.doc_metadata.file_name;
+    //         var page = choice.sources[0].document.doc_metadata.page_label;
+    //         var text = choice.message.content;
+
+    //         if (page === undefined) {
+    //             message = `
+    //                                <b>${file}</b>
+    //                                </br>
+    //                                ${text}
+    //                                </br></br>`
+    //         } else {
+    //             message = `
+    //                                <b>${file} (pagina ${page})</b>
+    //                                </br>
+    //                                ${text}
+    //                                </br></br>`
+    //         }
+    //         display.innerHTML += "<div class='border bg-dark text-light p-2 message'>" + message + "</div>";
+    //     });
+    //     display.scrollTop = display.scrollHeight;
+    // }
+}
+
+
+async function getFilter(value, loading, cronometro) {
+    files = [];
+
+    var responseData = await getChunks(value, loading, cronometro);
+    responseData.data.forEach((chunk) => {
+        var name = chunk.document.doc_metadata.file_name;
+        if (!files.includes(name)) {
+            files.push(name);
+        }
+    });
+
+    console.log('filter files: ', files)
+
+    return files
+}
+
+
+function comprobarContenido(cadena1, cadena2) {
+    var server_words = cadena2.split(' ');
+    var user_words = cadena1.split(' ');
+    var encontrada = true;
+
+    user_words.forEach(function (palabra, index) {
+        user_words[index] = processText(palabra);
+    });
+
+    server_words.forEach(function (palabra, index) {
+        server_words[index] = processText(palabra);
+    });
+
+    user_words.forEach(function (word) {
+        if (!server_words.includes(word)) {
+            encontrada = false;
+        }
+    });
+
+    return encontrada;
+}
+
+
+function processText(cadena) {
+    cadena = cadena.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    cadena = cadena.replace(/[.,()'…"“”:\[\]\n\t—]/g, '');
+    cadena = cadena.toLowerCase();
+
+    return cadena;
 }
 
 
@@ -358,48 +527,18 @@ function confirmDelete() {
     var del = document.getElementById('delete');
     var conf = document.getElementById('confirm-delete');
 
-    if (del.style.display === 'flex') {
-        del.style.display = 'none';
-        conf.style.display = 'flex';
-    } else {
-        del.style.display = 'flex';
-        conf.style.display = 'none';
+    if (selected_files.length > 0) {
+        if (!deleteVisible) {
+            del.style.display = 'none';
+            conf.style.display = 'flex';
+        } else {
+            del.style.display = 'flex';
+            conf.style.display = 'none';
+        }
+        deleteVisible = !deleteVisible;
     }
 }
 
-
-function comprobarContenido(cadena1, cadena2) {
-    var server_words = cadena2.split(' ');
-    var user_words = cadena1.split(' ');
-    var encontrada = false;
-
-    user_words.forEach(function (palabra, index) {
-        user_words[index] = processText(palabra);
-    });
-
-    server_words.forEach(function (palabra) {
-        var server = processText(palabra);
-        var user = processText(cadena1);
-
-        console.log(server, ' &&  ', user)
-        console.log(user_words);
-        if (user_words.includes(server)) {
-            console.log('conincidencia: ', palabra, 'CON :', cadena1)
-            console.log('EN: ', server_words)
-            encontrada = true;
-        }
-    });
-    return encontrada;
-}
-
-
-function processText(cadena) {
-    cadena = cadena.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-    cadena = cadena.replace(/[.,()'…":\[\]\n\[\t]—]/g, '');
-    cadena = cadena.toLowerCase();
-
-    return cadena;
-}
 
 function changeMode1() {
     var search = document.getElementById('search');
@@ -420,11 +559,11 @@ function changeMode2() {
     query.className = 'btn btn-primary';
 }
 
+
 function reset() {
-    var display = document.getElementById('chat');
-    var input = document.getElementById('input');
-    display.innerHTML = '';
-    input.value = '';
+    document.getElementById('chat').innerHTML = '';
+    document.getElementById('input').value = '';
+    document.getElementById('chat-crono').innerHTML = '';
 }
 
 
@@ -450,9 +589,11 @@ function seeIngested() {
     }
 }
 
+
 function openDir() {
     document.getElementById('input-dir').click();
 }
+
 
 setInterval(keepAlive, 20000);
 getIngestedFiles();
