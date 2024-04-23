@@ -301,7 +301,6 @@ async function getChunks(value, cronometro) {
         });
         cancelAnimationFrame(requestId);
         var endTime = performance.now();
-
         if (!response.ok) {
             throw new Error('Network response was not ok');
         } else {
