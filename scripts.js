@@ -301,10 +301,10 @@ async function getChunks(value, cronometro) {
         });
         cancelAnimationFrame(requestId);
         var endTime = performance.now();
+
         if (!response.ok) {
             throw new Error('Network response was not ok');
         } else {
-            loading.style.display = 'none';
             const responseTimeInSeconds = (endTime - startTime) / 1000;
             cronometro.textContent = responseTimeInSeconds.toFixed(2) + ' s';
         }
@@ -326,7 +326,7 @@ async function search(value, display, cronometro) {
     display.innerHTML += "<div class='border bg-primary text-light p-2 ml-auto message mt-2 mb-2'>" + value + "</div>";
 
     try {
-        var responseData = await getChunks(value, loading, cronometro);
+        var responseData = await getChunks(value, cronometro);
 
         var messages = '';
         var count = 1;
@@ -334,34 +334,8 @@ async function search(value, display, cronometro) {
             var text = chunk.text;
             var file = chunk.document.doc_metadata.file_name;
             var page = chunk.document.doc_metadata.page_label;
-            var message;
             if (comprobarContenido(value, text)) {
-                const regex = /www\.[^\s]+/g;
-                const links = text.match(regex);
-                text = text.replace(/(www\.[^\s]+|https?:\/\/[^\s]+)/g, '');
-                if (page === undefined) {
-                    message = `
-                                   ${count} . <b>${file}</b>
-                                   </br>
-                                   <p class='ml-2 m-0'>${text}</p>
-                                   </br>
-                                   `
-                } else {
-                    message = `
-                                   ${count} . <b>${file} (pagina ${page})</b>
-                                   </br>
-                                   <p class='ml-2 m-0'>${text}</p>
-                                   </br>
-                                   `
-                }
-
-                if (links) {
-                    links.forEach(function (link) {
-                        message += `<a href='http://${link}'>${link}</a> 
-                                        </br>`
-                    });
-                }
-                message += "<hr class='bg-light'>"
+                var message = buildMessage(count, file, page, text)
                 messages += message;
                 count++;
             }
@@ -377,23 +351,94 @@ async function search(value, display, cronometro) {
 }
 
 
-async function getMessage(value, cronometro) {
-    try {
-        var filter = [];
-        if (selected_files.length === 0) {
-            filter = await getFilter(value, cronometro);
-        } else {
-            filter = selected_files;
-        }
+function buildMessage(count, file, page, text) {
+    var message;
+    const regex = /www\.[^\s]+/g;
+    const links = text.match(regex);
+    text = text.replace(/(www\.[^\s]+|https?:\/\/[^\s]+)/g, '');
+    if (page === undefined) {
+        message = `
+                    ${count} . <b>${file}</b>
+                    </br>
+                    <p class='ml-2 m-0'>${text}</p>
+                    </br>
+                    `
+    } else {
+        message = `
+                    ${count} . <b>${file} (pagina ${page})</b>
+                    </br>
+                    <p class='ml-2 m-0'>${text}</p>
+                    </br>
+                    `
+    }
+    if (links) {
+        links.forEach(function (link) {
+            message += `<a href='http://${link}'>${link}</a> 
+                                        </br>`
+        });
+    }
+    message += "<hr class='bg-light'>";
+    return message;
+}
 
-        const requestBody = {
+
+async function getFilter(value, cronometro) {
+    files = [];
+    var chunks = await getChunks(value, cronometro);
+    chunks.data.forEach((chunk) => {
+        var name = chunk.document.doc_metadata.file_name;
+        if (!files.includes(name) && comprobarContenido(value, chunk.text)) {
+            files.push(name);
+        }
+    });
+
+    return files
+}
+
+
+function escapeDoubleQuotes(obj) {
+    if (typeof obj === 'string') {
+        // Escapar comillas dobles dentro de la cadena
+        return obj.replace(/"(.*?)"/g, function (match, p1) {
+            return '"' + p1.replace(/"/g, '\\"') + '"';
+        });
+    }
+    //  else if (typeof obj === 'object') {
+    //     // Si el objeto es un objeto, iterar sobre sus propiedades y aplicar la función a cada valor
+    //     for (var key in obj) {
+    //         if (obj.hasOwnProperty(key)) {
+    //             obj[key] = escapeDoubleQuotes(obj[key]);
+    //         }
+    //     }
+    // }
+    return obj;
+}
+
+
+
+async function query(value, display, cronometro) {
+    display.innerHTML += "<div class='border bg-primary text-light p-2 ml-auto message mt-2 mb-2'>" + value + "</div>";
+    display.innerHTML += "<div id='chat-message' class='border bg-dark text-light p-2 message'></div>";
+
+    var filter;
+    if (selected_files.length == 0) {
+        filter = await getFilter(value, cronometro);
+    } else {
+        filter = selected_files;
+    }
+    console.log('filter files: ', filter)
+
+    var chat_message = document.getElementById('chat-message');
+
+    try {
+        var requestBody = {
             context_filter: {
                 docs_ids: filter
             },
             include_sources: true,
             messages: [
                 {
-                    "content": "Always answer in spanish",
+                    "content": "Answer only in spanish",
                     "role": "system"
                 },
                 {
@@ -404,8 +449,8 @@ async function getMessage(value, cronometro) {
             stream: true,
             use_context: true
         };
-        startTime = performance.now();
-        requestId = requestAnimationFrame(updateElapsedTime);
+        var startTime = performance.now();
+        var requestId = requestAnimationFrame(updateElapsedTime);
         var response = await fetch(`http://${url}/v1/chat/completions`, {
             method: 'POST',
             body: JSON.stringify(requestBody),
@@ -413,6 +458,51 @@ async function getMessage(value, cronometro) {
                 'Content-Type': 'application/json'
             }
         });
+        var reader = response.body.getReader();
+        var files = [], pages = [];
+        var message = '', header = '';
+
+        while (true) {
+            var { done, value } = await reader.read();
+            if (done) break;
+            console.log('value: ', value);
+            var decodedValue = new TextDecoder().decode(value);
+            console.log(decodedValue);
+            var escaped = escapeDoubleQuotes(decodedValue.substring(6));
+            console.log(escaped);
+            if (escaped.trim() === '[DONE]') break;
+            var parsedValue = JSON.parse(escaped);
+            var choices = parsedValue.choices;
+            choices.forEach(choice => {
+                var content = choice.delta.content;
+                console.log("Contenido:", content);
+                if (choice.sources !== null) {
+                    choice.sources.forEach(source => {
+                        var file = source.document.doc_metadata.file_name;
+                        var page = source.document.doc_metadata.page_label;
+
+                        console.log("Nombre del archivo:", file);
+                        console.log("Etiqueta de página:", page);
+                        if (!files.includes(file)) {
+                            files.push(file);
+                        }
+                        if (!pages.includes(page)) {
+                            pages.push(page);
+                        }
+                    });
+                }
+                var header = '';
+                for (var i = 0; i < files.length; i++) {
+                    header += files[i] + ' pag. ' + pages[i] + ' , ';
+                }
+                header = header.slice(0, -2)
+                header += '</br>'
+                message += content;
+                chat_message.innerHTML = header + message;
+            });
+
+        }
+
         cancelAnimationFrame(requestId);
         var endTime = performance.now();
 
@@ -422,9 +512,10 @@ async function getMessage(value, cronometro) {
             const responseTimeInSeconds = (endTime - startTime) / 1000;
             cronometro.textContent = responseTimeInSeconds.toFixed(2) + ' s';
         }
-
-        return response;
     } catch (error) {
+        if (error instanceof SyntaxError && error.message.includes('unexpected token')) {
+            return;
+        }
         console.error('There was an error with the fetch request:', error);
         cancelAnimationFrame(requestId);
     }
@@ -436,58 +527,6 @@ async function getMessage(value, cronometro) {
     }
 }
 
-
-async function query(value, display, cronometro) {
-    loading.style.display = 'block';
-    display.innerHTML += "<div class='border bg-primary text-light p-2 ml-auto message mt-2 mb-2'>" + value + "</div>";
-
-    var responseData = await getMessage(value, cronometro);
-    console.log('response data: ', responseData);
-
-    
-
-    // var message;
-    // if (responseData.choices && responseData.choices.length > 0) {
-    //     responseData.choices.forEach(choice => {
-    //         var file = choice.sources[0].document.doc_metadata.file_name;
-    //         var page = choice.sources[0].document.doc_metadata.page_label;
-    //         var text = choice.message.content;
-
-    //         if (page === undefined) {
-    //             message = `
-    //                                <b>${file}</b>
-    //                                </br>
-    //                                ${text}
-    //                                </br></br>`
-    //         } else {
-    //             message = `
-    //                                <b>${file} (pagina ${page})</b>
-    //                                </br>
-    //                                ${text}
-    //                                </br></br>`
-    //         }
-    //         display.innerHTML += "<div class='border bg-dark text-light p-2 message'>" + message + "</div>";
-    //     });
-    //     display.scrollTop = display.scrollHeight;
-    // }
-}
-
-
-async function getFilter(value, loading, cronometro) {
-    files = [];
-
-    var responseData = await getChunks(value, loading, cronometro);
-    responseData.data.forEach((chunk) => {
-        var name = chunk.document.doc_metadata.file_name;
-        if (!files.includes(name)) {
-            files.push(name);
-        }
-    });
-
-    console.log('filter files: ', files)
-
-    return files
-}
 
 
 function comprobarContenido(cadena1, cadena2) {
