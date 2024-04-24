@@ -1,12 +1,15 @@
 const ip = '127.0.0.1';
 const port = '8001';
 const url = `${ip}:${port}`;
+const username = 'Basic';
+const session = 'c2VjcmV0OmtleQ=='
 var deleteVisible = false;
 var mode = true;
 var files_to_ingest = [];
 var file_names_to_ingest = [];
 var ingested_files = [];
 var selected_files = [];
+var reader;
 
 
 function selectFile(element) {
@@ -98,7 +101,10 @@ async function ingestFile(file, loading) {
         formData.append('file', file);
         const response = await fetch(`http://${url}/v1/ingest/file`, {
             method: 'POST',
-            body: formData
+            body: formData,
+            headers: {
+                'Authorization': `${username} ${session}`
+            }
         });
 
         if (response.ok) {
@@ -123,6 +129,7 @@ async function getIngestedFiles() {
             method: 'GET',
             headers: {
                 'Accept': 'application/json',
+                'Authorization': `${username} ${session}`
             }
         });
 
@@ -246,7 +253,10 @@ async function deleteFiles() {
 async function deleteFile(file_name, deleting) {
     try {
         const response = await fetch(`http://${url}/v1/ingest/${file_name}`, {
-            method: 'DELETE'
+            method: 'DELETE',
+            headers: {
+                'Authorization': `${username} ${session}`
+            }
         });
 
         if (response.ok) {
@@ -296,7 +306,8 @@ async function getChunks(value, cronometro) {
             method: 'POST',
             body: JSON.stringify(requestBody),
             headers: {
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                'Authorization': `${username} ${session}`
             }
         });
         cancelAnimationFrame(requestId);
@@ -323,7 +334,8 @@ async function getChunks(value, cronometro) {
 
 
 async function search(value, display, cronometro) {
-    display.innerHTML += "<div class='border bg-primary text-light p-2 ml-auto message mt-2 mb-2'>" + value + "</div>";
+    nextMsg();
+    display.innerHTML += "<div id='msg-cont'><div class='border bg-primary text-light p-2 ml-auto message mt-2 mb-2'>" + value + "</div>";
 
     try {
         var responseData = await getChunks(value, cronometro);
@@ -342,7 +354,7 @@ async function search(value, display, cronometro) {
         });
 
         if (messages !== '') {
-            display.innerHTML += "<div class='border bg-dark text-light p-2 message'>" + messages + "</div>";
+            display.innerHTML += "<div class='d-flex'><div class='border bg-dark text-light p-2 message'>" + messages + "</div><button id='up-btn' class='mt-auto ml-2 mb-1 align-items-center justify-content-center' onclick='goUp()'><div class='material-symbols-outlined'>arrow_upward</div></button></div></div>";
         }
         display.scrollTop = display.scrollHeight;
     } catch (error) {
@@ -382,18 +394,18 @@ function buildMessage(count, file, page, text) {
 }
 
 
-async function getFilter(value, cronometro) {
-    files = [];
-    var chunks = await getChunks(value, cronometro);
-    chunks.data.forEach((chunk) => {
-        var name = chunk.document.doc_metadata.file_name;
-        if (!files.includes(name) && comprobarContenido(value, chunk.text)) {
-            files.push(name);
-        }
-    });
+// async function getFilter(value, cronometro) {
+//     files = [];
+//     var chunks = await getChunks(value, cronometro);
+//     chunks.data.forEach((chunk) => {
+//         var name = chunk.document.doc_metadata.file_name;
+//         if (!files.includes(name) && comprobarContenido(value, chunk.text)) {
+//             files.push(name);
+//         }
+//     });
 
-    return files
-}
+//     return files
+// }
 
 
 function escapeDoubleQuotes(obj) {
@@ -420,20 +432,20 @@ async function query(value, display, cronometro) {
     display.innerHTML += "<div class='border bg-primary text-light p-2 ml-auto message mt-2 mb-2'>" + value + "</div>";
     display.innerHTML += "<div id='chat-message' class='border bg-dark text-light p-2 message'></div>";
 
-    var filter;
-    if (selected_files.length == 0) {
-        filter = await getFilter(value, cronometro);
-    } else {
-        filter = selected_files;
-    }
-    console.log('filter files: ', filter)
+    // var filter;
+    // if (selected_files.length == 0) {
+    //     filter = await getFilter(value, cronometro);
+    // } else {
+    //     filter = selected_files;
+    // }
+    // console.log('filter files: ', filter)
 
     var chat_message = document.getElementById('chat-message');
 
     try {
         var requestBody = {
             context_filter: {
-                docs_ids: filter
+                docs_ids: selected_files
             },
             include_sources: true,
             messages: [
@@ -449,16 +461,19 @@ async function query(value, display, cronometro) {
             stream: true,
             use_context: true
         };
+        document.getElementById('stop-btn').style.display = 'flex';
+        document.getElementById('send-btn').style.display = 'none';
         var startTime = performance.now();
         var requestId = requestAnimationFrame(updateElapsedTime);
         var response = await fetch(`http://${url}/v1/chat/completions`, {
             method: 'POST',
             body: JSON.stringify(requestBody),
             headers: {
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                'Authorization': `${username} ${session}`
             }
         });
-        var reader = response.body.getReader();
+        reader = response.body.getReader();
         var files = [], pages = [];
         var message = '', header = '';
 
@@ -496,7 +511,7 @@ async function query(value, display, cronometro) {
                     header += files[i] + ' pag. ' + pages[i] + ' , ';
                 }
                 header = header.slice(0, -2)
-                header += '</br>'
+                header += "<hr class='bg-light m-0'> </br>"
                 message += content;
                 chat_message.innerHTML = header + message;
             });
@@ -505,6 +520,8 @@ async function query(value, display, cronometro) {
 
         cancelAnimationFrame(requestId);
         var endTime = performance.now();
+        document.getElementById('send-btn').style.display = 'flex';
+        document.getElementById('stop-btn').style.display = 'none';
 
         if (!response.ok) {
             throw new Error('Network response was not ok');
@@ -631,6 +648,52 @@ function seeIngested() {
 function openDir() {
     document.getElementById('input-dir').click();
 }
+
+
+function searchFile() {
+    document.getElementById('search-label').style.display = 'none';
+    document.getElementById('search-btn').style.display = 'none';
+    document.getElementById('reset-search-btn').style.display = 'flex';
+
+
+    var input = document.getElementById('search-input');
+    input.style.display = 'flex'
+    input.style.width = '0';
+    input.style.opacity = '0';
+
+    input.focus();
+    setTimeout(function () {
+        input.style.width = '100%';
+        input.style.opacity = '1';
+    }, 5);
+}
+
+
+function closeReader() {
+    if (reader) {
+        reader.cancel();
+    }
+}
+
+function goUp() {
+    var chat = document.getElementById('chat');
+    var msgCont = document.getElementById('msg-cont');
+    var scrollTop = msgCont.offsetTop - chat.offsetTop;
+
+    chat.scrollTop = scrollTop;
+}
+
+function nextMsg() {
+    var msgCont = document.getElementById('msg-cont');
+    
+    if (msgCont) {
+        var upButton = document.getElementById('up-btn');
+        upButton.parentNode.removeChild(upButton);
+        
+        msgCont.id = '#';
+    }
+}
+
 
 
 setInterval(keepAlive, 20000);

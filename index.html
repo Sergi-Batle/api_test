@@ -6,7 +6,18 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Chatbot</title>
     <script src="scripts.js"></script>
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300..800;1,300..800&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
+    <link rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
+    <link rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
+    <link rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 
@@ -33,7 +44,7 @@
             </div>
 
             <div class="load-cont">
-                <div class="p-1 text-center rounded-top bg-secondary text-light">
+                <div class="list-header p-1 text-center rounded-top bg-secondary text-light">
                     Archivos para cargar
                 </div>
 
@@ -55,19 +66,32 @@
 
 
             <div class="row m-0">
-                <div class="bg-secondary text-light w-100 text-center rounded-top p-1">
-                    Archivos cargados
+                <div
+                    class="list-header d-flex bg-secondary text-light w-100 text-center rounded-top align-items-center">
+                    <input type="text" id="search-input" class="form-control" placeholder="Buscar archivo">
+                    <div id="search-label" class="w-100 ml-4  text-center">
+                        Archivos cargados
+                    </div>
+                    <div class="ml-auto d-flex align-items-center h-100 mr-1">
+                        <div id="search-btn" class="material-symbols-outlined" onclick="searchFile()">
+                            search
+                        </div>
+                        <div id="reset-search-btn" class="material-symbols-outlined" onclick="setIngestedFiles()">
+                            restart_alt
+                        </div>
+                    </div>
+
                 </div>
 
-                <select id="file-list-ingested" multiple class="file-list w-100 m-0"
-                    onchange="addToSelectedList(this), seeSelected()">
+                <select id="file-list-ingested" multiple class="selectpicker file-list w-100 m-0"
+                    data-show-subtext="true" data-live-search="true" onchange="addToSelectedList(this), seeSelected()">
                 </select>
                 <button type="button" onclick="selectAllOptions()" class="btn btn-info w-100 ">Seleccionar
                     Todo</button>
             </div>
 
             <div class="selected-cont">
-                <div class="bg-secondary text-light w-100 text-center rounded-top p-1">
+                <div class="list-header bg-secondary text-light w-100 text-center rounded-top p-1">
                     Archivos seleccionados (consultar o borrar)
                 </div>
 
@@ -103,11 +127,9 @@
         <div class="col-lg-8 col-sm-12  pb-3 bg-dark">
             <div class="d-flex align-items-start flex-column h-100">
                 <div class="d-flex nav align-items-center w-100">
-                    <button id="search" type="button" class="btn btn-primary"
-                        onclick="changeMode1()">Buscar
+                    <button id="search" type="button" class="btn btn-primary" onclick="changeMode1()">Buscar
                         texto</button>
-                    <button id="query" type="button" class="btn btn-secondary"
-                        onclick="changeMode2()">Consultar
+                    <button id="query" type="button" class="btn btn-secondary" onclick="changeMode2()">Consultar
                         documentos</button>
 
                     <div id="loading-chat" class="pl-3 text-light"></div>
@@ -115,14 +137,22 @@
                 </div>
 
                 <div class="d-block border border-primary rounded overflow-auto w-100 bg-light p-2" id="chat">
-                    
+
                 </div>
 
                 <div class="mt-auto pt-2  w-100">
                     <div id="user-input" class="input-group " onkeypress="handleKeyPress(event)">
                         <input type="text" class="form-control" placeholder="Escribe" id="input">
                         <div class="input-group-append">
-                            <button class="btn btn-outline-light" type="button" onclick="send()">Enviar</button>
+
+                            <button id="stop-btn" class="btn btn-outline-light p-0 align-items-center" type="button"
+                                onclick="closeReader()">
+                                <div class="material-symbols-outlined m-auto">
+                                    stop_circle
+                                </div>
+                            </button>
+                            <button id="send-btn" class="btn btn-outline-light" type="button"
+                                onclick="send()">Enviar</button>
                             <button class="btn btn-outline-light" type="button" onclick="reset()">Reset</button>
                         </div>
                     </div>
@@ -130,6 +160,34 @@
             </div>
         </div>
     </div>
+    <script>
+        var input = document.getElementById('search-input');
+
+        input.addEventListener('blur', function (event) {
+            document.getElementById('search-label').style.display = 'block';
+            document.getElementById('search-input').style.display = 'none';
+            document.getElementById('search-btn').style.display = 'block';
+            document.getElementById('reset-search-btn').click();
+            document.getElementById('reset-search-btn').style.display = 'none';
+        });
+
+
+
+        document.getElementById('search-input').addEventListener('input', function () {
+            var searchTerm = this.value.toLowerCase();
+            var select = document.getElementById('file-list-ingested');
+            var options = select.getElementsByTagName('option');
+
+            for (var i = 0; i < options.length; i++) {
+                var optionText = options[i].text.toLowerCase();
+                if (optionText.includes(searchTerm)) {
+                    options[i].style.display = '';
+                } else {
+                    options[i].style.display = 'none';
+                }
+            }
+        });
+    </script>
 </body>
 
 </html>

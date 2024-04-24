@@ -46,9 +46,10 @@ select {
 }
 
 #chat {
-    font-family: sans-serif;
+    font-family: 'Open Sans', 'Helvetica Neue', sans-serif;
     height: 100%;
     position: relative;
+    scroll-behavior: smooth;
 }
 
 #chat::-webkit-scrollbar-track,
@@ -181,8 +182,8 @@ p.text-center {
 }
 
 #chat-crono {
-    margin-left: auto; 
-    margin-right: 20px; 
+    margin-left: auto;
+    margin-right: 20px;
     display: flex;
     align-items: center;
     font-weight: 400;
@@ -190,7 +191,7 @@ p.text-center {
 
 
 #loading-chat {
-    display: flex;
+    display: none;
     font-size: 1em;
     font-weight: 400;
 }
@@ -210,7 +211,7 @@ p.text-center {
 }
 
 .message {
-    max-width: 98%;
+    max-width: 95%;
     border-radius: 10px;
     width: fit-content;
 }
@@ -229,3 +230,57 @@ img {
     background-color: #007BFF;
 }
 
+
+#search-btn,
+#reset-search-btn,
+#stop-btn {
+    cursor: pointer;
+}
+
+
+#reset-search-btn {
+    display: none;
+}
+
+
+#search-input {
+    display: none;
+    height: 95%;
+    transition: width 0.4s ease-in-out, opacity 0.3s ease-in;
+}
+
+.list-header {
+    height: 2em;
+    padding: .1em;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+
+.input-group-append button {
+    width: 4.5em;
+}
+
+
+#stop-btn {
+    display: none;
+}
+
+
+#up-btn {
+    border-radius: 50%;
+    border: solid #343A40 1px;
+    padding: 3px;
+    color: #F8F9FA;
+    height: 2em;
+    width: 2em;
+    background-color: #343A40;
+    transition: all 0.3s ease;
+}
+
+#up-btn:hover {
+    color: #343A40;
+    background-color: #F8F9FA;
+    box-shadow: 0 0 5px rgba(0, 0, 0, 0.5), inset 0 0 4px rgba(0, 0, 0, 0.5);
+}
