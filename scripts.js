@@ -1,10 +1,9 @@
 const ip = '127.0.0.1';
 const port = '8001';
 const url = `${ip}:${port}`;
-const username = 'Basic';
-const session = 'c2VjcmV0OmtleQ=='
+var username = 'sergi';
 var deleteVisible = false;
-var mode = true;
+var mode = false;
 var files_to_ingest = [];
 var file_names_to_ingest = [];
 var ingested_files = [];
@@ -97,13 +96,13 @@ function resetPreFiles() {
 
 async function ingestFile(file, loading) {
     try {
-        const formData = new FormData();
+        var formData = new FormData();
         formData.append('file', file);
-        const response = await fetch(`http://${url}/v1/ingest/file`, {
+        var response = await fetch(`http://${url}/v1/ingest/file`, {
             method: 'POST',
             body: formData,
             headers: {
-                'Authorization': `${username} ${session}`
+                'Authorization': username
             }
         });
 
@@ -125,18 +124,18 @@ async function ingestFile(file, loading) {
 async function getIngestedFiles() {
     ingested_files = [];
     try {
-        const response = await fetch(`http://${url}/v1/ingest/list`, {
+        var response = await fetch(`http://${url}/v1/ingest/list`, {
             method: 'GET',
             headers: {
                 'Accept': 'application/json',
-                'Authorization': `${username} ${session}`
+                'Authorization': username
             }
         });
 
         if (!response.ok) {
             throw new Error('Network response was not ok');
         }
-        const data = await response.json();
+        var data = await response.json();
         data.forEach(function (fileName) {
             ingested_files.push(fileName);
         });
@@ -149,11 +148,11 @@ async function getIngestedFiles() {
 
 
 function setIngestedFiles() {
-    const fileListElement = document.getElementById('file-list-ingested');
+    var fileListElement = document.getElementById('file-list-ingested');
     fileListElement.innerHTML = '';
-    const fragment = document.createDocumentFragment();
+    var fragment = document.createDocumentFragment();
     ingested_files.forEach(function (name) {
-        const listItem = document.createElement('option');
+        var listItem = document.createElement('option');
         listItem.textContent = name;
         listItem.value = name;
         listItem.className = 'list-group-item no-collapse'
@@ -166,7 +165,7 @@ function setIngestedFiles() {
 
 async function keepAlive() {
     try {
-        const response = await fetch(`http://${url}/health`, {
+        var response = await fetch(`http://${url}/health`, {
             method: 'GET',
             headers: {
                 'Accept': 'application/json',
@@ -177,8 +176,8 @@ async function keepAlive() {
             throw new Error('Network response was not ok');
         }
 
-        const data = await response.json();
-        const status = data.status;
+        var data = await response.json();
+        var status = data.status;
         if (status === 'ok') {
             console.log('Conexion establecida');
         }
@@ -252,10 +251,10 @@ async function deleteFiles() {
 
 async function deleteFile(file_name, deleting) {
     try {
-        const response = await fetch(`http://${url}/v1/ingest/${file_name}`, {
+        var response = await fetch(`http://${url}/v1/ingest/${file_name}`, {
             method: 'DELETE',
             headers: {
-                'Authorization': `${username} ${session}`
+                'Authorization': username
             }
         });
 
@@ -275,7 +274,8 @@ async function deleteFile(file_name, deleting) {
 
 async function send() {
     var input = document.getElementById('input');
-    var display = document.getElementById('chat');
+    var searchDisplay = document.getElementById('search-display');
+    var queryDisplay = document.getElementById('query-display');
     var loading = document.getElementById('loading-chat');
     var cronometro = document.getElementById('chat-crono');
     var value = input.value.trim();
@@ -284,9 +284,9 @@ async function send() {
         loading.style.display = 'block';
         input.value = '';
         if (mode) {
-            await search(value, display, cronometro);
+            await search(value, searchDisplay, cronometro);
         } else {
-            await query(value, display, cronometro);
+            await query(value, queryDisplay, cronometro);
         }
         loading.style.display = 'none';
     }
@@ -295,7 +295,7 @@ async function send() {
 
 async function getChunks(value, cronometro) {
     try {
-        const requestBody = {
+        var requestBody = {
             text: value,
             limit: 100,
             prev_next_chunks: 50
@@ -307,7 +307,7 @@ async function getChunks(value, cronometro) {
             body: JSON.stringify(requestBody),
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `${username} ${session}`
+                'Authorization': username
             }
         });
         cancelAnimationFrame(requestId);
@@ -316,7 +316,7 @@ async function getChunks(value, cronometro) {
         if (!response.ok) {
             throw new Error('Network response was not ok');
         } else {
-            const responseTimeInSeconds = (endTime - startTime) / 1000;
+            var responseTimeInSeconds = (endTime - startTime) / 1000;
             cronometro.textContent = responseTimeInSeconds.toFixed(2) + ' s';
         }
 
@@ -326,7 +326,7 @@ async function getChunks(value, cronometro) {
     }
 
     function updateElapsedTime(currentTime) {
-        const elapsedTime = (currentTime - startTime) / 1000;
+        var elapsedTime = (currentTime - startTime) / 1000;
         cronometro.textContent = elapsedTime.toFixed(2) + ' s';
         requestId = requestAnimationFrame(updateElapsedTime);
     }
@@ -356,7 +356,7 @@ async function search(value, display, cronometro) {
         if (messages !== '') {
             display.innerHTML += "<div class='d-flex'><div class='border bg-dark text-light p-2 message'>" + messages + "</div><button id='up-btn' class='mt-auto ml-2 mb-1 align-items-center justify-content-center' onclick='goUp()'><div class='material-symbols-outlined'>arrow_upward</div></button></div></div>";
         }
-        display.scrollTop = display.scrollHeight;
+        document.getElementById('chat').scrollTop = display.scrollHeight;
     } catch (error) {
         console.error('There was an error with the fetch request:', error);
     }
@@ -365,8 +365,8 @@ async function search(value, display, cronometro) {
 
 function buildMessage(count, file, page, text) {
     var message;
-    const regex = /www\.[^\s]+/g;
-    const links = text.match(regex);
+    var regex = /www\.[^\s]+/g;
+    var links = text.match(regex);
     text = text.replace(/(www\.[^\s]+|https?:\/\/[^\s]+)/g, '');
     if (page === undefined) {
         message = `
@@ -394,20 +394,6 @@ function buildMessage(count, file, page, text) {
 }
 
 
-// async function getFilter(value, cronometro) {
-//     files = [];
-//     var chunks = await getChunks(value, cronometro);
-//     chunks.data.forEach((chunk) => {
-//         var name = chunk.document.doc_metadata.file_name;
-//         if (!files.includes(name) && comprobarContenido(value, chunk.text)) {
-//             files.push(name);
-//         }
-//     });
-
-//     return files
-// }
-
-
 function escapeDoubleQuotes(obj) {
     if (typeof obj === 'string') {
         // Escapar comillas dobles dentro de la cadena
@@ -415,14 +401,14 @@ function escapeDoubleQuotes(obj) {
             return '"' + p1.replace(/"/g, '\\"') + '"';
         });
     }
-    //  else if (typeof obj === 'object') {
-    //     // Si el objeto es un objeto, iterar sobre sus propiedades y aplicar la función a cada valor
-    //     for (var key in obj) {
-    //         if (obj.hasOwnProperty(key)) {
-    //             obj[key] = escapeDoubleQuotes(obj[key]);
-    //         }
-    //     }
-    // }
+     else if (typeof obj === 'object') {
+        // Si el objeto es un objeto, iterar sobre sus propiedades y aplicar la función a cada valor
+        for (var key in obj) {
+            if (obj.hasOwnProperty(key)) {
+                obj[key] = escapeDoubleQuotes(obj[key]);
+            }
+        }
+    }
     return obj;
 }
 
@@ -431,17 +417,7 @@ function escapeDoubleQuotes(obj) {
 async function query(value, display, cronometro) {
     display.innerHTML += "<div class='border bg-primary text-light p-2 ml-auto message mt-2 mb-2'>" + value + "</div>";
     display.innerHTML += "<div id='chat-message' class='border bg-dark text-light p-2 message'></div>";
-
-    // var filter;
-    // if (selected_files.length == 0) {
-    //     filter = await getFilter(value, cronometro);
-    // } else {
-    //     filter = selected_files;
-    // }
-    // console.log('filter files: ', filter)
-
     var chat_message = document.getElementById('chat-message');
-
     try {
         var requestBody = {
             context_filter: {
@@ -470,12 +446,12 @@ async function query(value, display, cronometro) {
             body: JSON.stringify(requestBody),
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `${username} ${session}`
+                'Authorization': username
             }
         });
         reader = response.body.getReader();
         var files = [], pages = [];
-        var message = '', header = '';
+        var message = '';
 
         while (true) {
             var { done, value } = await reader.read();
@@ -515,7 +491,6 @@ async function query(value, display, cronometro) {
                 message += content;
                 chat_message.innerHTML = header + message;
             });
-
         }
 
         cancelAnimationFrame(requestId);
@@ -526,9 +501,10 @@ async function query(value, display, cronometro) {
         if (!response.ok) {
             throw new Error('Network response was not ok');
         } else {
-            const responseTimeInSeconds = (endTime - startTime) / 1000;
+            var responseTimeInSeconds = (endTime - startTime) / 1000;
             cronometro.textContent = responseTimeInSeconds.toFixed(2) + ' s';
         }
+        chat_message.id = '#'
     } catch (error) {
         if (error instanceof SyntaxError && error.message.includes('unexpected token')) {
             return;
@@ -538,7 +514,7 @@ async function query(value, display, cronometro) {
     }
 
     function updateElapsedTime(currentTime) {
-        const elapsedTime = (currentTime - startTime) / 1000;
+        var elapsedTime = (currentTime - startTime) / 1000;
         cronometro.textContent = elapsedTime.toFixed(2) + ' s';
         requestId = requestAnimationFrame(updateElapsedTime);
     }
@@ -596,22 +572,30 @@ function confirmDelete() {
 
 
 function changeMode1() {
-    var search = document.getElementById('search');
-    var query = document.getElementById('query');
+    var searchBtn = document.getElementById('search');
+    var queryBtn = document.getElementById('query');
+    var searchDisplay = document.getElementById('search-display');
+    var queryDisplay = document.getElementById('query-display');
 
     mode = true;
-    search.className = 'btn btn-primary';
-    query.className = 'btn btn-secondary';
+    searchBtn.className = 'btn btn-primary';
+    queryBtn.className = 'btn btn-secondary';
+    queryDisplay.style.display= 'none';
+    searchDisplay.style.display= 'block';
 }
 
 
 function changeMode2() {
-    var search = document.getElementById('search');
-    var query = document.getElementById('query');
+    var searchBtn = document.getElementById('search');
+    var queryBtn = document.getElementById('query');
+    var searchDisplay = document.getElementById('search-display');
+    var queryDisplay = document.getElementById('query-display');
 
     mode = false;
-    search.className = 'btn btn-secondary';
-    query.className = 'btn btn-primary';
+    searchBtn.className = 'btn btn-secondary';
+    queryBtn.className = 'btn btn-primary';
+    queryDisplay.style.display= 'block';
+    searchDisplay.style.display= 'none';
 }
 
 
@@ -688,8 +672,9 @@ function nextMsg() {
     
     if (msgCont) {
         var upButton = document.getElementById('up-btn');
-        upButton.parentNode.removeChild(upButton);
-        
+        if (upButton){
+            upButton.parentNode.removeChild(upButton);
+        }
         msgCont.id = '#';
     }
 }
