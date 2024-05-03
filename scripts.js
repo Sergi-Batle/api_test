@@ -434,7 +434,7 @@ async function query(value, display, cronometro) {
                     "role": "user"
                 }
             ],
-            stream: true,
+            stream: false,
             use_context: true
         };
         document.getElementById('stop-btn').style.display = 'flex';
@@ -456,12 +456,10 @@ async function query(value, display, cronometro) {
         while (true) {
             var { done, value } = await reader.read();
             if (done) break;
-            console.log('value: ', value);
             var decodedValue = new TextDecoder().decode(value);
-            console.log(decodedValue);
-            var escaped = escapeDoubleQuotes(decodedValue.substring(6));
-            console.log(escaped);
-            if (escaped.trim() === '[DONE]') break;
+            console.log('decoded', decodedValue);
+            // var escaped = escapeDoubleQuotes(decodedValue.substring(6)).trim();
+            // if (escaped.trim() === '[DONE]') break;
             var parsedValue = JSON.parse(escaped);
             var choices = parsedValue.choices;
             choices.forEach(choice => {

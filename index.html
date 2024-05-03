@@ -127,9 +127,9 @@
         <div class="col-lg-8 col-sm-12  pb-3 bg-dark">
             <div class="d-flex align-items-start flex-column h-100">
                 <div class="d-flex nav align-items-center w-100">
-                    <button id="search" type="button" class="btn btn-primary" onclick="changeMode1()">Buscar
+                    <button id="search" type="button" class="btn btn-secondary" onclick="changeMode1()">Buscar
                         texto</button>
-                    <button id="query" type="button" class="btn btn-secondary" onclick="changeMode2()">Consultar
+                    <button id="query" type="button" class="btn btn-primary" onclick="changeMode2()">Consultar
                         documentos</button>
 
                     <div id="loading-chat" class="pl-3 text-light"></div>
@@ -137,7 +137,8 @@
                 </div>
 
                 <div class="d-block border border-primary rounded overflow-auto w-100 bg-light p-2" id="chat">
-
+                    <div id="search-display" class="w-100 h-100"></div>
+                    <div id="query-display" class="w-100 h-100"></div>
                 </div>
 
                 <div class="mt-auto pt-2  w-100">

@@ -257,16 +257,13 @@ img {
     justify-content: center;
 }
 
-
 .input-group-append button {
     width: 4.5em;
 }
 
-
 #stop-btn {
     display: none;
 }
-
 
 #up-btn {
     border-radius: 50%;
@@ -283,4 +280,12 @@ img {
     color: #343A40;
     background-color: #F8F9FA;
     box-shadow: 0 0 5px rgba(0, 0, 0, 0.5), inset 0 0 4px rgba(0, 0, 0, 0.5);
+}
+
+#search-display {
+    display: none;
+}
+
+#query-display {
+    display: block;
 }
