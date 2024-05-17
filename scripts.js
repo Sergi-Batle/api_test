@@ -1,7 +1,6 @@
 const ip = '127.0.0.1';
 const port = '8001';
 const url = `${ip}:${port}`;
-var username = 'sergi';
 var deleteVisible = false;
 var mode = false;
 var files_to_ingest = [];
@@ -9,6 +8,8 @@ var file_names_to_ingest = [];
 var ingested_files = [];
 var selected_files = [];
 var reader;
+// const admin_code="make_this_parameterizable_per_api_call"
+const admin_code="sergi"
 
 
 function selectFile(element) {
@@ -24,7 +25,6 @@ function selectDir(event) {
 
 
 function openFile(files) {
-    console.log('files in openfile: ', files);
     var ingested = [];
     var check = false;
     if (files.length > 0) {
@@ -98,12 +98,9 @@ async function ingestFile(file, loading) {
     try {
         var formData = new FormData();
         formData.append('file', file);
-        var response = await fetch(`http://${url}/v1/ingest/file`, {
+        var response = await fetch(`http://${url}/v1/ingest/file/${admin_code}`, {
             method: 'POST',
             body: formData,
-            headers: {
-                'Authorization': username
-            }
         });
 
         if (response.ok) {
@@ -124,11 +121,10 @@ async function ingestFile(file, loading) {
 async function getIngestedFiles() {
     ingested_files = [];
     try {
-        var response = await fetch(`http://${url}/v1/ingest/list`, {
+        var response = await fetch(`http://${url}/v1/ingest/list/${admin_code}`, {
             method: 'GET',
             headers: {
                 'Accept': 'application/json',
-                'Authorization': username
             }
         });
 
@@ -251,11 +247,8 @@ async function deleteFiles() {
 
 async function deleteFile(file_name, deleting) {
     try {
-        var response = await fetch(`http://${url}/v1/ingest/${file_name}`, {
+        var response = await fetch(`http://${url}/v1/ingest/${file_name}/${admin_code}`, {
             method: 'DELETE',
-            headers: {
-                'Authorization': username
-            }
         });
 
         if (response.ok) {
@@ -302,12 +295,12 @@ async function getChunks(value, cronometro) {
         };
         var startTime = performance.now();
         var requestId = requestAnimationFrame(updateElapsedTime);
-        var response = await fetch(`http://${url}/v1/chunks`, {
+        var response = await fetch(`http://${url}/v1/chunks/${admin_code}`, {
             method: 'POST',
             body: JSON.stringify(requestBody),
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': username
+
             }
         });
         cancelAnimationFrame(requestId);
@@ -395,26 +388,19 @@ function buildMessage(count, file, page, text) {
 
 
 function escapeDoubleQuotes(obj) {
-    if (typeof obj === 'string') {
-        // Escapar comillas dobles dentro de la cadena
-        return obj.replace(/"(.*?)"/g, function (match, p1) {
-            return '"' + p1.replace(/"/g, '\\"') + '"';
-        });
-    }
-     else if (typeof obj === 'object') {
-        // Si el objeto es un objeto, iterar sobre sus propiedades y aplicar la función a cada valor
-        for (var key in obj) {
-            if (obj.hasOwnProperty(key)) {
-                obj[key] = escapeDoubleQuotes(obj[key]);
-            }
-        }
-    }
-    return obj;
+    return obj.replace(/"(.*?)"/g, function (match, p1) {
+        return '"' + p1.replace(/"/g, '\\"“”') + '"';
+    });
 }
 
 
 
 async function query(value, display, cronometro) {
+    let system_prompt = "You are a helpful, respectful and honest assistant." +
+        "If you know the answer but it is not based in the provided context, don't provide the answer, just state the answer is not in the context provided." +
+        "Do not speculate or make up information." +
+        "Answer only in spanish.";
+
     display.innerHTML += "<div class='border bg-primary text-light p-2 ml-auto message mt-2 mb-2'>" + value + "</div>";
     display.innerHTML += "<div id='chat-message' class='border bg-dark text-light p-2 message'></div>";
     var chat_message = document.getElementById('chat-message');
@@ -426,7 +412,7 @@ async function query(value, display, cronometro) {
             include_sources: true,
             messages: [
                 {
-                    "content": "Answer only in spanish",
+                    "content": system_prompt,
                     "role": "system"
                 },
                 {
@@ -434,7 +420,7 @@ async function query(value, display, cronometro) {
                     "role": "user"
                 }
             ],
-            stream: false,
+            stream: true,
             use_context: true
         };
         document.getElementById('stop-btn').style.display = 'flex';
@@ -446,7 +432,6 @@ async function query(value, display, cronometro) {
             body: JSON.stringify(requestBody),
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': username
             }
         });
         reader = response.body.getReader();
@@ -458,8 +443,9 @@ async function query(value, display, cronometro) {
             if (done) break;
             var decodedValue = new TextDecoder().decode(value);
             console.log('decoded', decodedValue);
-            // var escaped = escapeDoubleQuotes(decodedValue.substring(6)).trim();
-            // if (escaped.trim() === '[DONE]') break;
+            var escaped = escapeDoubleQuotes(decodedValue.substring(6)).trim();
+            if (escaped.trim() === '[DONE]') break;
+            escaped = JSON.stringify(escaped)
             var parsedValue = JSON.parse(escaped);
             var choices = parsedValue.choices;
             choices.forEach(choice => {
@@ -517,7 +503,6 @@ async function query(value, display, cronometro) {
         requestId = requestAnimationFrame(updateElapsedTime);
     }
 }
-
 
 
 function comprobarContenido(cadena1, cadena2) {
@@ -578,8 +563,8 @@ function changeMode1() {
     mode = true;
     searchBtn.className = 'btn btn-primary';
     queryBtn.className = 'btn btn-secondary';
-    queryDisplay.style.display= 'none';
-    searchDisplay.style.display= 'block';
+    queryDisplay.style.display = 'none';
+    searchDisplay.style.display = 'block';
 }
 
 
@@ -592,8 +577,8 @@ function changeMode2() {
     mode = false;
     searchBtn.className = 'btn btn-secondary';
     queryBtn.className = 'btn btn-primary';
-    queryDisplay.style.display= 'block';
-    searchDisplay.style.display= 'none';
+    queryDisplay.style.display = 'block';
+    searchDisplay.style.display = 'none';
 }
 
 
@@ -667,10 +652,10 @@ function goUp() {
 
 function nextMsg() {
     var msgCont = document.getElementById('msg-cont');
-    
+
     if (msgCont) {
         var upButton = document.getElementById('up-btn');
-        if (upButton){
+        if (upButton) {
             upButton.parentNode.removeChild(upButton);
         }
         msgCont.id = '#';
@@ -679,5 +664,7 @@ function nextMsg() {
 
 
 
-setInterval(keepAlive, 20000);
+// setInterval(keepAlive, 20000);
 getIngestedFiles();
+
+keepAlive()
