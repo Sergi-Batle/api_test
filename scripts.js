@@ -1,4 +1,4 @@
-const ip = '127.0.0.1';
+const ip = '192.168.0.15';
 const port = '8001';
 const url = `${ip}:${port}`;
 var deleteVisible = false;
@@ -9,7 +9,7 @@ var ingested_files = [];
 var selected_files = [];
 var reader;
 // const admin_code="make_this_parameterizable_per_api_call"
-const admin_code="sergi"
+const admin_code = "sergi"
 
 
 function selectFile(element) {
@@ -387,12 +387,55 @@ function buildMessage(count, file, page, text) {
 }
 
 
-function escapeDoubleQuotes(obj) {
-    return obj.replace(/"(.*?)"/g, function (match, p1) {
-        return '"' + p1.replace(/"/g, '\\"“”') + '"';
-    });
+function get_query_data(cadena) {
+    let contentRegex = /"delta":\{"content":"(.*?)"\}/g;
+    let contentMatches = [];
+    let match;
+    while ((match = contentRegex.exec(cadena)) !== null) {
+        contentMatches.push(match[1]);
+    }
+
+    let docRegex = /"page_label":"(.*?)","file_name":"(.*?)"/g;
+    let docMatches = [];
+    while ((match = docRegex.exec(cadena)) !== null) {
+        docMatches.push({ page_label: match[1], file_name: match[2] });
+    }
+
+    return result = {
+        contents: contentMatches,
+        documents: docMatches
+
+    };
 }
 
+
+function build_header(files, pages) {
+    if (files.length !== 0 && pages.length !== 0) {
+        var extracted_files = {};
+
+        for (var i = 0; i < files.length; i++) {
+            var file = files[i].trim();
+            var page = pages[i].toString().trim();
+
+            if (!extracted_files[file]) {
+                extracted_files[file] = new Set();
+            }
+            extracted_files[file].add(page);
+        }
+
+        var header = '';
+        for (var file in extracted_files) {
+            var pagesArray = Array.from(extracted_files[file]).sort((a, b) => a - b);
+            header += file + " pg. " + pagesArray.join(', ') + "; ";
+        }
+        
+        if (header.endsWith("; ")) {
+            header = header.slice(0, -2);
+        }
+
+        return header;
+    }
+}
 
 
 async function query(value, display, cronometro) {
@@ -427,7 +470,7 @@ async function query(value, display, cronometro) {
         document.getElementById('send-btn').style.display = 'none';
         var startTime = performance.now();
         var requestId = requestAnimationFrame(updateElapsedTime);
-        var response = await fetch(`http://${url}/v1/chat/completions`, {
+        var response = await fetch(`http://${url}/v1/chat/completions/${admin_code}`, {
             method: 'POST',
             body: JSON.stringify(requestBody),
             headers: {
@@ -435,46 +478,29 @@ async function query(value, display, cronometro) {
             }
         });
         reader = response.body.getReader();
-        var files = [], pages = [];
         var message = '';
 
+        
         while (true) {
             var { done, value } = await reader.read();
             if (done) break;
             var decodedValue = new TextDecoder().decode(value);
-            console.log('decoded', decodedValue);
-            var escaped = escapeDoubleQuotes(decodedValue.substring(6)).trim();
-            if (escaped.trim() === '[DONE]') break;
-            escaped = JSON.stringify(escaped)
-            var parsedValue = JSON.parse(escaped);
-            var choices = parsedValue.choices;
-            choices.forEach(choice => {
-                var content = choice.delta.content;
-                console.log("Contenido:", content);
-                if (choice.sources !== null) {
-                    choice.sources.forEach(source => {
-                        var file = source.document.doc_metadata.file_name;
-                        var page = source.document.doc_metadata.page_label;
 
-                        console.log("Nombre del archivo:", file);
-                        console.log("Etiqueta de página:", page);
-                        if (!files.includes(file)) {
-                            files.push(file);
-                        }
-                        if (!pages.includes(page)) {
-                            pages.push(page);
-                        }
-                    });
-                }
-                var header = '';
-                for (var i = 0; i < files.length; i++) {
-                    header += files[i] + ' pag. ' + pages[i] + ' , ';
-                }
-                header = header.slice(0, -2)
-                header += "<hr class='bg-light m-0'> </br>"
+            console.log('decoded', decodedValue);
+            if (decodedValue.trim() === '[DONE]') break;
+
+            result = get_query_data(decodedValue.trim())
+            console.log("DATA\n" + result.contents + "\n" + result.documents.map(doc => doc.file_name).join(', ') + "\n" + result.documents.map(doc => doc.page_label).join(', '));
+            var content = result.contents[0];
+            header = build_header(result.documents.map(doc => doc.file_name), result.documents.map(doc => doc.page_label))
+
+            if (header !== undefined && content !== undefined) {
+                sources = header.trim();
                 message += content;
-                chat_message.innerHTML = header + message;
-            });
+                message = message.replace(/\\n/g,"</br>").replace(/\\t/g," ").replace(/\\\"/g, '"').replace(/\\"/g, '"');
+                chat_message.innerHTML = sources + "<hr class='bg-light m-0'> </br>" + message;
+                document.getElementById('chat').scrollTop = display.scrollHeight;
+            }
         }
 
         cancelAnimationFrame(requestId);
