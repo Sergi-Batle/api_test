@@ -1,6 +1,6 @@
-<mxfile host="app.diagrams.net" modified="2024-05-22T08:33:30.535Z" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36" etag="TTi9Pc4Zl1AORq6l1OlQ" version="24.4.4" type="github">
+<mxfile host="app.diagrams.net" modified="2024-05-22T14:52:25.300Z" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36" etag="cnFlksUA4zUUZ2woDFNS" version="24.4.4" type="github">
   <diagram name="Página-1" id="J4KStZirxJ80GVOOFsrg">
-    <mxGraphModel dx="4170" dy="2143" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+    <mxGraphModel dx="4727" dy="2500" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
@@ -176,7 +176,7 @@
           <mxGeometry y="180" width="700" height="30" as="geometry" />
         </mxCell>
         <mxCell id="1Bel1J-EvUVG8ot48oie-38" value="LLMComponent" style="swimlane;fontStyle=0;childLayout=stackLayout;horizontal=1;startSize=30;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;whiteSpace=wrap;html=1;" parent="1" vertex="1">
-          <mxGeometry x="1743" y="374.27" width="230" height="90" as="geometry" />
+          <mxGeometry x="1686.25" y="419.27" width="230" height="90" as="geometry" />
         </mxCell>
         <mxCell id="1Bel1J-EvUVG8ot48oie-39" value="llm :LLM" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;" parent="1Bel1J-EvUVG8ot48oie-38" vertex="1">
           <mxGeometry y="30" width="230" height="30" as="geometry" />
@@ -203,7 +203,7 @@
           <mxGeometry y="90" width="540" height="30" as="geometry" />
         </mxCell>
         <mxCell id="1Bel1J-EvUVG8ot48oie-47" value="ChatService" style="swimlane;fontStyle=0;childLayout=stackLayout;horizontal=1;startSize=30;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;whiteSpace=wrap;html=1;" parent="1" vertex="1">
-          <mxGeometry x="1603" y="794.27" width="625" height="240" as="geometry" />
+          <mxGeometry x="1546.25" y="839.27" width="625" height="240" as="geometry" />
         </mxCell>
         <mxCell id="1Bel1J-EvUVG8ot48oie-48" value="settings :Settings" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;" parent="1Bel1J-EvUVG8ot48oie-47" vertex="1">
           <mxGeometry y="30" width="625" height="30" as="geometry" />
@@ -449,16 +449,16 @@
           <mxGeometry x="699.57" y="1226.1100000000001" width="575" height="30" as="geometry" />
         </mxCell>
         <mxCell id="Vmexeel7bZFI55DIrSs_-11" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=none;rotation=90;strokeWidth=3;strokeColor=#994C00;arcSize=34;" vertex="1" parent="1">
-          <mxGeometry x="1714.69" y="585.48" width="407.45" height="694.84" as="geometry" />
+          <mxGeometry x="1657.94" y="630.48" width="407.45" height="694.84" as="geometry" />
         </mxCell>
         <mxCell id="Vmexeel7bZFI55DIrSs_-12" value="&lt;font style=&quot;font-size: 49px;&quot;&gt;&lt;font style=&quot;font-size: 49px;&quot; color=&quot;#994c00&quot;&gt;Chat&amp;nbsp;&lt;/font&gt;&lt;span style=&quot;color: rgb(153, 76, 0); background-color: initial;&quot;&gt;(QUERY)&lt;/span&gt;&lt;/font&gt;" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=16;" vertex="1" parent="1">
-          <mxGeometry x="1783" y="1075" width="260" height="30" as="geometry" />
+          <mxGeometry x="1726.25" y="1120" width="260" height="30" as="geometry" />
         </mxCell>
         <mxCell id="Vmexeel7bZFI55DIrSs_-13" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=none;rotation=90;strokeWidth=3;strokeColor=#0066CC;arcSize=34;" vertex="1" parent="1">
-          <mxGeometry x="1674.48" y="190" width="188.69" height="476.86" as="geometry" />
+          <mxGeometry x="1617.73" y="235" width="188.69" height="476.86" as="geometry" />
         </mxCell>
         <mxCell id="Vmexeel7bZFI55DIrSs_-14" value="&lt;font style=&quot;font-size: 40px;&quot; color=&quot;#0066cc&quot;&gt;Language&lt;/font&gt;&lt;div style=&quot;font-size: 40px;&quot;&gt;&lt;font style=&quot;font-size: 40px;&quot; color=&quot;#0066cc&quot;&gt;Model&lt;/font&gt;&lt;/div&gt;" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=16;" vertex="1" parent="1">
-          <mxGeometry x="1503" y="413.43000000000006" width="270" height="30" as="geometry" />
+          <mxGeometry x="1446.25" y="458.43000000000006" width="270" height="30" as="geometry" />
         </mxCell>
         <mxCell id="Vmexeel7bZFI55DIrSs_-15" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=none;rotation=90;strokeWidth=3;strokeColor=#FF33FF;arcSize=34;" vertex="1" parent="1">
           <mxGeometry x="453" y="-340" width="334.33" height="1108.17" as="geometry" />
@@ -468,8 +468,8 @@
         </mxCell>
         <mxCell id="Vmexeel7bZFI55DIrSs_-17" value="" style="endArrow=none;html=1;rounded=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;exitX=0;exitY=0.5;exitDx=0;exitDy=0;" edge="1" parent="1" source="Vmexeel7bZFI55DIrSs_-11" target="Vmexeel7bZFI55DIrSs_-13">
           <mxGeometry width="50" height="50" relative="1" as="geometry">
-            <mxPoint x="750" y="970" as="sourcePoint" />
-            <mxPoint x="800" y="920" as="targetPoint" />
+            <mxPoint x="693.25" y="1015" as="sourcePoint" />
+            <mxPoint x="743.25" y="965" as="targetPoint" />
           </mxGeometry>
         </mxCell>
         <mxCell id="Vmexeel7bZFI55DIrSs_-18" value="" style="endArrow=none;html=1;rounded=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;exitX=0;exitY=0.5;exitDx=0;exitDy=0;" edge="1" parent="1" source="9FyMMMVgbmmM6HtAQbzG-34" target="Vmexeel7bZFI55DIrSs_-15">
