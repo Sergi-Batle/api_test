@@ -5,7 +5,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Chatbot</title>
-    <script src="scripts.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300..800;1,300..800&display=swap"
@@ -161,34 +160,7 @@
             </div>
         </div>
     </div>
-    <script>
-        var input = document.getElementById('search-input');
-
-        input.addEventListener('blur', function (event) {
-            document.getElementById('search-label').style.display = 'block';
-            document.getElementById('search-input').style.display = 'none';
-            document.getElementById('search-btn').style.display = 'block';
-            document.getElementById('reset-search-btn').click();
-            document.getElementById('reset-search-btn').style.display = 'none';
-        });
-
-
-
-        document.getElementById('search-input').addEventListener('input', function () {
-            var searchTerm = this.value.toLowerCase();
-            var select = document.getElementById('file-list-ingested');
-            var options = select.getElementsByTagName('option');
-
-            for (var i = 0; i < options.length; i++) {
-                var optionText = options[i].text.toLowerCase();
-                if (optionText.includes(searchTerm)) {
-                    options[i].style.display = '';
-                } else {
-                    options[i].style.display = 'none';
-                }
-            }
-        });
-    </script>
+    <script src="scripts.js"></script>
 </body>
 
 </html>
