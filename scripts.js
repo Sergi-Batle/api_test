@@ -1,4 +1,4 @@
-const ip = '192.168.0.15';
+const ip = '127.0.0.1';
 const port = '8001';
 const url = `${ip}:${port}`;
 var deleteVisible = false;

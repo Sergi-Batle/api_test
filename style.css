@@ -39,7 +39,7 @@ select#file-list-ingested option:nth-child(odd) {
 
 ul,
 select {
-    height: 21vh;
+    height: 19vh;
     background-color: #f0f0f0;
     transition: height 0.3s ease-in-out;
     outline: none;
