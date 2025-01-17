@@ -5,4 +5,4 @@ Búsqueda semántica
 
 Conversacion IA
  ![Alt text](https://github.com/Sergi-Batle/chatbot_IA/blob/main/screenshots/conversacion1.PNG)
- ![Alt text](https://github.com/Sergi-Batle/chatbot_IA/blob/main/screenshots/busqueda2.PNG)
+ ![Alt text](https://github.com/Sergi-Batle/chatbot_IA/blob/main/screenshots/conversacion2.PNG)
