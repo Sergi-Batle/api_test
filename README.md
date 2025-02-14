@@ -1,5 +1,7 @@
 Cliente web para aplicacion Python [Privategpt](https://github.com/zylon-ai/private-gpt) ligeramente modificado
+
 HTML, CSS, JS, BOOTSTRAP
+
 Chatbot documentos PDF y búsqueda semántica
 
 Búsqueda semántica
